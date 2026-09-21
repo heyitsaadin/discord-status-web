@@ -77,7 +77,9 @@ The card only shows an event while it is **less than 30 seconds old**, measured 
 discord-status-web/
 ├── index.html          # the whole site: HTML, CSS and JS in one file
 ├── api/
-│   └── avatar.js       # Vercel function: serves your current Discord avatar as a PNG
+│   ├── avatar.js       # Vercel function: serves your current Discord avatar as a PNG
+│   ├── discord.js      # Vercel function: receives the /tag slash command from Discord
+│   └── setup-commands.js  # one-time page that registers /tag with Discord
 ├── YOUR_VIDEO_FILE.mp4 # the background video
 └── README.md
 ```
