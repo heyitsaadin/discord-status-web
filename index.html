@@ -56,6 +56,10 @@
     object-fit: cover;
     z-index: 0;
     filter: saturate(1.08) contrast(1.04);
+    /* Opacity is driven by the crossfade script (JS animates it each frame),
+       so no CSS transition here -- that would fight the script. */
+    opacity: 0;
+    background: #000;
   }
 
   /* Vignette */
