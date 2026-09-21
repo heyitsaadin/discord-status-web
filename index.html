@@ -1015,6 +1015,103 @@
 
   fetchPresence();
   setInterval(fetchPresence, 10000);
+
+  // ---- GitHub activity (Option C: direct from GitHub's API, no Discord involved) ----
+  const GITHUB_USERNAME = 'heyitsaadin';
+
+  const GH_EVENT_LABELS = {
+    PushEvent: 'Pushed to',
+    PullRequestEvent: 'Pull request',
+    IssuesEvent: 'Issue',
+    IssueCommentEvent: 'Commented on',
+    CreateEvent: 'Created',
+    DeleteEvent: 'Deleted',
+    ForkEvent: 'Forked',
+    WatchEvent: 'Starred',
+    ReleaseEvent: 'Released',
+    PublicEvent: 'Open-sourced'
+  };
+
+  function timeAgo(dateStr) {
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    return `${months}mo ago`;
+  }
+
+  function describeGithubEvent(evt) {
+    const repo = evt.repo && evt.repo.name ? evt.repo.name.split('/').pop() : 'a repo';
+    const kind = GH_EVENT_LABELS[evt.type] || evt.type.replace('Event', '');
+
+    switch (evt.type) {
+      case 'PushEvent': {
+        const commits = evt.payload && evt.payload.commits;
+        const n = commits ? commits.length : 0;
+        const lastMsg = n > 0 ? commits[n - 1].message.split('\n')[0] : '';
+        return { kind, name: repo, detail: lastMsg || `${n} commit${n === 1 ? '' : 's'}` };
+      }
+      case 'PullRequestEvent': {
+        const action = evt.payload && evt.payload.action;
+        const title = evt.payload && evt.payload.pull_request && evt.payload.pull_request.title;
+        return { kind: `PR ${action || ''}`.trim(), name: repo, detail: title || '' };
+      }
+      case 'IssuesEvent': {
+        const action = evt.payload && evt.payload.action;
+        const title = evt.payload && evt.payload.issue && evt.payload.issue.title;
+        return { kind: `Issue ${action || ''}`.trim(), name: repo, detail: title || '' };
+      }
+      case 'IssueCommentEvent': {
+        const title = evt.payload && evt.payload.issue && evt.payload.issue.title;
+        return { kind, name: repo, detail: title || '' };
+      }
+      case 'CreateEvent': {
+        const refType = evt.payload && evt.payload.ref_type;
+        return { kind: `Created ${refType || ''}`.trim(), name: repo, detail: (evt.payload && evt.payload.ref) || '' };
+      }
+      case 'ReleaseEvent': {
+        const tag = evt.payload && evt.payload.release && evt.payload.release.tag_name;
+        return { kind, name: repo, detail: tag || '' };
+      }
+      default:
+        return { kind, name: repo, detail: '' };
+    }
+  }
+
+  async function fetchGithubActivity() {
+    const block = el('githubActivityBlock');
+    try {
+      const res = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/events/public?per_page=1`);
+      if (!res.ok) {
+        block.classList.remove('show');
+        return;
+      }
+      const events = await res.json();
+      if (!Array.isArray(events) || events.length === 0) {
+        block.classList.remove('show');
+        return;
+      }
+      const evt = events[0];
+      const { kind, name, detail } = describeGithubEvent(evt);
+      el('githubActivityKind').textContent = kind;
+      el('githubActivityName').textContent = name;
+      el('githubActivityDetail').textContent = detail;
+      el('githubActivityTime').textContent = timeAgo(evt.created_at);
+      block.href = `https://github.com/${evt.repo && evt.repo.name ? evt.repo.name : GITHUB_USERNAME}`;
+      block.classList.add('show');
+    } catch (e) {
+      // Fail quietly -- this block is a bonus, not core to the page.
+      block.classList.remove('show');
+    }
+  }
+
+  fetchGithubActivity();
+  setInterval(fetchGithubActivity, 120000); // GitHub's unauthenticated rate limit is 60 req/hr -- 2 min interval keeps this well under it
 </script>
 
 </body>
