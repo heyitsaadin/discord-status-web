@@ -723,10 +723,9 @@
 </head>
 <body>
 
-  <!-- Swap src below for your own video file -->
-  <video class="page-video" id="bgVideo" loop playsinline>
-    <source src="YOUR_VIDEO_FILE.mp4" type="video/mp4">
-  </video>
+  <!-- Background video: the source is filled in by script from the videos in /background-videos.
+       No `loop` attribute: the script plays the videos one after another and loops the playlist. -->
+  <video class="page-video" id="bgVideo" playsinline></video>
   <div class="motion-streaks"></div>
   <div class="vignette"></div>
   <div class="video-placeholder" id="videoPlaceholder">drop your video in as the page bg — see comment in code</div>
