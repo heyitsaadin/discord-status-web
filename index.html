@@ -1587,6 +1587,28 @@
     </div>
   </div>
 
+  <!-- Background videos card: a list of every background video. Tap one to expand it and
+       preview it right there, one at a time. While this card is open the page's own
+       background videos are paused so their audio can't clash with the preview. -->
+  <div class="credits-card videos-card" id="videosCard" role="dialog" aria-modal="true" aria-labelledby="videosTitle" aria-hidden="true">
+    <div class="credits-scroll" id="videosScroll">
+      <div class="credits-head">
+        <div class="credits-title" id="videosTitle">Background videos</div>
+        <button class="credits-close" id="videosClose" type="button" aria-label="Close background videos" tabindex="-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <p class="credits-note">
+        Tap a video to watch it. Only one plays at a time, and the next one starts when it ends.
+        The page background is paused while this list is open.
+      </p>
+
+      <div class="credits-label">All videos</div>
+      <ul class="vid-list" id="videosList"></ul>
+    </div>
+  </div>
+
   <div class="more-scrim" id="moreScrim"></div>
   <div class="more-menu" id="moreMenu">
     <button class="more-trigger" id="moreTrigger" type="button" aria-label="Open menu" aria-haspopup="true" aria-expanded="false" aria-controls="moreContent">
