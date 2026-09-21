@@ -2200,34 +2200,60 @@
   const creditsList = el('creditsList');
   const creditsClose = el('creditsClose');
 
-  // Build the rows with DOM methods (not innerHTML) so a handle can never inject markup.
-  CREDITS.forEach((c) => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.className = 'credits-item';
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.href = c.post
-      ? 'https://www.instagram.com/p/' + encodeURIComponent(c.post) + '/'
-      : 'https://www.instagram.com/' + encodeURIComponent(c.handle) + '/';
-    a.tabIndex = -1;
+  // Rebuilds the list from the current playlist. Runs every time the card opens, so it is
+  // always up to date. Rows are made with DOM methods (not innerHTML) so a handle can
+  // never inject markup.
+  function renderCredits() {
+    const { creators, uncredited } = buildCredits(playlist);
+    creditsList.textContent = '';
 
-    const handle = document.createElement('span');
-    handle.className = 'credits-handle';
-    handle.textContent = '@' + c.handle;
+    creators.forEach((c) => {
+      const posts = Array.from(c.posts);
+      const single = posts.length === 1;
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.className = 'credits-item';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      // One video: link straight to that post. Several from the same creator: link to
+      // their profile, so each creator still gets exactly one row.
+      a.href = single
+        ? 'https://www.instagram.com/p/' + encodeURIComponent(posts[0]) + '/'
+        : 'https://www.instagram.com/' + encodeURIComponent(c.handle) + '/';
 
-    const kind = document.createElement('span');
-    kind.className = 'credits-kind';
-    kind.textContent = c.post ? 'View post' : 'Profile';
+      const handle = document.createElement('span');
+      handle.className = 'credits-handle';
+      handle.textContent = '@' + c.handle;
 
-    a.appendChild(handle);
-    a.appendChild(kind);
-    a.insertAdjacentHTML('beforeend', ICON_EXTERNAL);
-    li.appendChild(a);
-    creditsList.appendChild(li);
-  });
+      const kind = document.createElement('span');
+      kind.className = 'credits-kind';
+      kind.textContent = single ? 'View post' : posts.length + ' videos';
 
-  const creditsLinks = Array.from(creditsList.querySelectorAll('a'));
+      a.appendChild(handle);
+      a.appendChild(kind);
+      a.insertAdjacentHTML('beforeend', ICON_EXTERNAL);
+      li.appendChild(a);
+      creditsList.appendChild(li);
+    });
+
+    const note = (text) => {
+      const li = document.createElement('li');
+      li.className = 'credits-empty';
+      li.textContent = text;
+      creditsList.appendChild(li);
+    };
+    if (playlist.length === 0) {
+      note('This list fills in automatically once the background videos have loaded.');
+    } else if (creators.length === 0) {
+      note('None of the current videos have creator info in their filename.');
+    } else if (uncredited > 0) {
+      note(uncredited === 1 ? '1 more video has no creator info yet.' : uncredited + ' more videos have no creator info yet.');
+    }
+
+    creditsLinks = Array.from(creditsList.querySelectorAll('a'));
+  }
+
+  let creditsLinks = [];
   let creditsOpen = false;
 
   function setCreditsOpen(open) {
