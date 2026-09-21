@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/videos.js": {
+      "includeFiles": "background-videos/**"
+    }
+  }
+}
