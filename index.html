@@ -2259,6 +2259,9 @@
   function setCreditsOpen(open) {
     if (open === creditsOpen) return;
     creditsOpen = open;
+    // Build the list first, so the card opens with its final content and the links exist
+    // before their keyboard focus is set below.
+    if (open) renderCredits();
     creditsCard.classList.toggle('open', open);
     creditsCard.setAttribute('aria-hidden', String(!open));
     // Only let the card's controls take keyboard focus while it is open.
