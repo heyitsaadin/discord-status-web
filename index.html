@@ -507,6 +507,21 @@
   video.addEventListener('loadeddata', () => placeholder.style.display = 'none');
   video.addEventListener('error', () => placeholder.style.display = 'flex');
 
+  // Mute / unmute toggle
+  const muteBtn = el('muteBtn');
+  const muteIcon = el('muteIcon');
+  const ICON_MUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+  const ICON_UNMUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
+
+  muteBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+    if (!video.muted) {
+      video.play().catch(() => {});
+    }
+    muteIcon.innerHTML = video.muted ? ICON_MUTED : ICON_UNMUTED;
+    muteBtn.setAttribute('aria-label', video.muted ? 'Unmute background video' : 'Mute background video');
+  });
+
   fetchPresence();
   setInterval(fetchPresence, 10000);
 </script>
