@@ -7,3 +7,4 @@ Drop your background videos in this folder. The site picks them up automatically
 - Files are played in filename order, so name them `01-name.mp4`, `02-name.mp4` etc. if you care about the order.
 - Keep each file reasonably small (aim for under 20 MB) so the page loads fast.
 - No code changes needed. Push the files and redeploy.
+- **Credits are automatic.** Keep the filename exactly as yt-dlp saved it (`Video by <creator> [<id>].mp4`). The Credits card reads the creator and post link from it. Don't rename those files, or that video loses its credit. A video with any other name still plays, but shows up only as "N more videos have no creator info yet".
