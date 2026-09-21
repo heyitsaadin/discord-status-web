@@ -2172,25 +2172,27 @@
   });
 
   // ---- Credits ----
-  // EDIT THIS LIST to add, remove or fix credits. `post` is the Instagram shortcode
-  // that yt-dlp put in each filename ("Video by <handle> [<shortcode>].mp4"). When it
-  // is set, the row links to that exact post; when it is null, the row links to the
-  // creator's profile instead.
-  const CREDITS = [
-    { handle: '_capocat',            post: 'DarjCt9Sqjf' },
-    { handle: 'advait.f1',           post: 'DYBvGfzoRPv' },
-    { handle: 'animatography',       post: 'DW9JvPyjD3w' },
-    { handle: 'ggnfx_',              post: 'DcRUczjyJW0' },
-    { handle: 'kryton.1',            post: 'DZscnUby5dY' },
-    { handle: 'leaf.vc',             post: 'DaGH9_WMCQ5' },
-    { handle: 'ninja.arcx',          post: 'DWWYlCojzgf' },
-    { handle: 'padilhaeditor',       post: 'DYxIMg_slqg' },
-    // The filename was cut off in the screenshot, so the full shortcode isn't known
-    // yet (it starts "DdEqBteCVJ"). Profile link until it's filled in.
-    { handle: 'runwiththegoldenwolf', post: null },
-    { handle: 'tdawgisded',          post: 'DT3cIK8jGIL' },
-    { handle: 'yu1.apel',            post: 'DSOS5dTkiB9' }
-  ];
+  // yt-dlp saves Instagram videos as "Video by <handle> [<shortcode>].<ext>", so each
+  // filename already carries the creator's name and the post ID. The credits are read
+  // straight from the /background-videos playlist, so adding or removing a video updates
+  // them with no code changes. Files that don't match that pattern can't be credited
+  // automatically, so they are counted at the bottom of the list instead of guessed at.
+  const CREDIT_FILENAME = /^Video by ([A-Za-z0-9._]+) \[([A-Za-z0-9_-]+)\](?: \(\d+\))?\.[A-Za-z0-9]+$/;
+
+  function buildCredits(videos) {
+    const byCreator = new Map();   // lower-cased handle -> { handle, posts: Set of shortcodes }
+    let uncredited = 0;
+    videos.forEach((v) => {
+      const m = CREDIT_FILENAME.exec((v && v.name) || '');
+      if (!m) { uncredited++; return; }
+      const key = m[1].toLowerCase();
+      if (!byCreator.has(key)) byCreator.set(key, { handle: m[1], posts: new Set() });
+      byCreator.get(key).posts.add(m[2]);
+    });
+    const creators = Array.from(byCreator.values()).sort((a, b) =>
+      a.handle.localeCompare(b.handle, undefined, { sensitivity: 'base' }));
+    return { creators, uncredited };
+  }
 
   const ICON_EXTERNAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
 
