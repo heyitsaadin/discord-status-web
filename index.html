@@ -7,15 +7,12 @@
 <style>
   :root {
     --bg: #050505;
-    --surface: #0d0d10;
-    --surface-2: #141418;
-    --line: rgba(255,255,255,0.08);
-    --text: #f2f1ee;
-    --text-dim: #8b8b93;
+    --text: #f5f4f1;
+    --text-dim: rgba(245,244,241,0.62);
     --online: #3ba55d;
     --idle: #e8a33d;
     --dnd: #ed4245;
-    --offline: #5c5c66;
+    --offline: #8a8a92;
     --accent: #7c6fff;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
@@ -26,6 +23,7 @@
     height: 100%;
     background: var(--bg);
     color: var(--text);
+    overflow: hidden;
   }
 
   /* ---- Full-page background video ---- */
@@ -36,15 +34,36 @@
     height: 100%;
     object-fit: cover;
     z-index: 0;
-    filter: saturate(1.05) brightness(0.55);
+    filter: saturate(1.08) contrast(1.04);
   }
 
-  .page-video-overlay {
+  /* Vignette */
+  .vignette {
     position: fixed;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(180deg, rgba(5,5,5,0.35) 0%, rgba(5,5,5,0.55) 100%);
     pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 92%, rgba(0,0,0,0.8) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 78%, rgba(0,0,0,0.5) 100%);
+  }
+
+  /* Comic-style motion streaks, radiating faintly from center */
+  .motion-streaks {
+    position: fixed;
+    inset: -10%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background: repeating-conic-gradient(
+      from 0deg,
+      rgba(255,255,255,0.9) 0deg 0.4deg,
+      transparent 0.4deg 6deg
+    );
+    -webkit-mask-image: radial-gradient(circle at center, transparent 20%, black 62%, black 100%);
+    mask-image: radial-gradient(circle at center, transparent 20%, black 62%, black 100%);
+    filter: blur(1.5px);
   }
 
   .video-placeholder {
@@ -57,7 +76,7 @@
     font-size: 12px;
     letter-spacing: 0.02em;
     color: rgba(255,255,255,0.35);
-    background: linear-gradient(135deg, #1a1a2e 0%, #16161f 100%);
+    background: radial-gradient(circle at center, #1a1a2e 0%, #0c0c12 100%);
   }
 
   body {
@@ -71,94 +90,54 @@
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 
-  .card {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    max-width: 420px;
-    border-radius: 18px;
-    overflow: hidden;
-    background: rgba(13,13,16,0.72);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--line);
-    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7);
-  }
-
-  .card-top {
-    height: 56px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%);
-  }
-
-  /* ---- Avatar / identity ---- */
+  /* ---- Floating identity, no card ---- */
   .identity {
     position: relative;
-    padding: 0 20px;
-    margin-top: -44px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
   }
 
   .avatar-wrap {
     position: relative;
-    width: 84px;
-    height: 84px;
+    width: 132px;
+    height: 132px;
+    filter: drop-shadow(0 12px 40px rgba(0,0,0,0.65));
   }
 
-  .avatar-wrap img {
+  .avatar-wrap img#avatar {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 4px solid var(--surface);
-    background: var(--surface-2);
+    border: 3px solid rgba(255,255,255,0.18);
+    background: #141418;
     display: block;
     object-fit: cover;
   }
 
   .avatar-decoration {
     position: absolute;
-    top: -8px;
-    left: -8px;
-    width: calc(100% + 16px);
-    height: calc(100% + 16px);
+    top: -13%;
+    left: -13%;
+    width: 126%;
+    height: 126%;
     pointer-events: none;
     display: none;
   }
 
   .avatar-decoration.show { display: block; }
 
-  /* ---- Mute toggle ---- */
-  .mute-btn {
-    position: fixed;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-    right: 20px;
-    z-index: 3;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(13,13,16,0.72);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text);
-    transition: background 0.2s ease, transform 0.15s ease;
-  }
-
-  .mute-btn:hover { background: rgba(20,20,24,0.85); }
-  .mute-btn:active { transform: scale(0.94); }
-
-  .mute-btn svg { width: 20px; height: 20px; }
-
   .status-dot {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 22px;
-    height: 22px;
+    bottom: 4px;
+    right: 4px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    border: 4px solid var(--surface);
+    border: 4px solid var(--bg);
     background: var(--offline);
     transition: background 0.3s ease;
   }
@@ -178,175 +157,169 @@
     100% { transform: scale(1.9); opacity: 0; }
   }
 
-  .name-row {
-    margin-top: 12px;
+  .name-block {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.6);
   }
 
   .display-name {
-    font-size: 20px;
+    font-size: 26px;
     font-weight: 650;
     letter-spacing: -0.01em;
   }
 
   .username {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-dim);
   }
 
   .status-label {
-    margin-top: 4px;
-    font-size: 12.5px;
+    margin-top: 2px;
+    font-size: 13px;
     color: var(--text-dim);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
   }
 
   .status-label .dot-inline {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: var(--offline);
   }
 
-  /* ---- Activity block ---- */
+  /* ---- Activity pill ---- */
   .activity {
-    margin: 16px 20px 0;
-    padding: 12px;
-    border-radius: 12px;
-    background: var(--surface-2);
-    border: 1px solid var(--line);
+    margin-top: 4px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(20,20,24,0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.1);
     display: none;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
+    max-width: 320px;
   }
 
   .activity.show { display: flex; }
 
   .activity img {
-    width: 44px;
-    height: 44px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
     object-fit: cover;
     flex-shrink: 0;
     background: #1c1c22;
   }
 
-  .activity-text { min-width: 0; }
+  .activity-text {
+    min-width: 0;
+    text-align: left;
+  }
 
   .activity-kind {
-    font-size: 10.5px;
+    font-size: 9.5px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-dim);
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
 
   .activity-name {
-    font-size: 13.5px;
+    font-size: 12.5px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 220px;
   }
 
   .activity-detail {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-top: 1px;
-  }
-
-  /* ---- Footer ---- */
-  .footer {
-    margin-top: 16px;
-    padding: 14px 20px 20px;
-    border-top: 1px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-
-  .footer .live-tag {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .footer .live-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-
-  .footer .live-dot.on {
-    animation: blink 1.6s ease-in-out infinite;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.25; }
+    max-width: 220px;
   }
 
   .error-banner {
-    margin: 14px 20px 0;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: rgba(237,66,69,0.1);
+    margin-top: 4px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(237,66,69,0.14);
     border: 1px solid rgba(237,66,69,0.3);
-    color: #ff8b8d;
-    font-size: 12px;
+    color: #ff9698;
+    font-size: 11.5px;
     display: none;
   }
 
   .error-banner.show { display: block; }
 
+  /* ---- Mute toggle ---- */
+  .mute-btn {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: 20px;
+    z-index: 3;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(13,13,16,0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .mute-btn:hover { background: rgba(20,20,24,0.7); }
+  .mute-btn:active { transform: scale(0.94); }
+  .mute-btn svg { width: 20px; height: 20px; }
+
   @media (prefers-reduced-motion: reduce) {
-    .status-dot.pulse::before,
-    .footer .live-dot.on { animation: none; }
+    .status-dot.pulse::before { animation: none; }
   }
 </style>
 </head>
 <body>
 
   <!-- Swap src below for your own video file -->
-  <video class="page-video" id="bgVideo" autoplay muted loop playsinline>
+  <video class="page-video" id="bgVideo" loop playsinline>
     <source src="YOUR_VIDEO_FILE.mp4" type="video/mp4">
   </video>
-  <div class="page-video-overlay"></div>
+  <div class="motion-streaks"></div>
+  <div class="vignette"></div>
   <div class="video-placeholder" id="videoPlaceholder">drop your video in as the page bg — see comment in code</div>
 
-  <button class="mute-btn" id="muteBtn" aria-label="Unmute background video">
+  <button class="mute-btn" id="muteBtn" aria-label="Mute background video">
     <svg id="muteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-      <line x1="23" y1="9" x2="17" y2="15"></line>
-      <line x1="17" y1="9" x2="23" y2="15"></line>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
     </svg>
   </button>
 
-  <div class="card">
-    <div class="card-top"></div>
+  <div class="identity">
+    <div class="avatar-wrap">
+      <img id="avatar" src="" alt="avatar">
+      <img id="avatarDecoration" class="avatar-decoration" src="" alt="">
+      <div class="status-dot" id="statusDot"></div>
+    </div>
 
-    <div class="identity">
-      <div class="avatar-wrap">
-        <img id="avatar" src="" alt="avatar">
-        <img id="avatarDecoration" class="avatar-decoration" src="" alt="">
-        <div class="status-dot" id="statusDot"></div>
-      </div>
-
-      <div class="name-row">
-        <span class="display-name" id="displayName">—</span>
-        <span class="username" id="username">@—</span>
-      </div>
+    <div class="name-block">
+      <span class="display-name" id="displayName">—</span>
+      <span class="username" id="username">@—</span>
       <div class="status-label">
         <span class="dot-inline" id="statusDotInline"></span>
         <span id="statusText">connecting…</span>
@@ -363,11 +336,6 @@
     </div>
 
     <div class="error-banner" id="errorBanner"></div>
-
-    <div class="footer">
-      <span>discord presence</span>
-      <span class="live-tag"><span class="live-dot" id="liveDot"></span><span id="liveText">offline</span></span>
-    </div>
   </div>
 
 <script>
@@ -411,17 +379,11 @@
     dot.classList.toggle('pulse', status === 'online');
     el('statusDotInline').style.background = color;
     el('statusText').textContent = STATUS_LABELS[status] || 'Offline';
-
-    const liveDot = el('liveDot');
-    liveDot.style.background = color;
-    liveDot.classList.toggle('on', status !== 'offline');
-    el('liveText').textContent = STATUS_LABELS[status] || 'Offline';
   }
 
   function applyActivity(activities, spotify) {
     const block = el('activityBlock');
 
-    // Prefer Spotify if present (Lanyard gives it separately)
     if (spotify) {
       block.classList.add('show');
       el('activityKind').textContent = 'Listening to Spotify';
@@ -431,7 +393,6 @@
       return;
     }
 
-    // Otherwise use the first non-custom-status activity
     const act = (activities || []).find(a => a.type !== 4) || (activities || [])[0];
     if (!act) {
       block.classList.remove('show');
@@ -469,7 +430,12 @@
     const decoImg = el('avatarDecoration');
     const asset = user.avatar_decoration_data && user.avatar_decoration_data.asset;
     if (asset) {
-      decoImg.src = `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=256`;
+      // Decoration assets are almost always animated — try gif first, fall back to png if it 404s.
+      decoImg.onerror = () => {
+        decoImg.onerror = () => decoImg.classList.remove('show');
+        decoImg.src = `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=256`;
+      };
+      decoImg.src = `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.gif?size=256`;
       decoImg.classList.add('show');
     } else {
       decoImg.classList.remove('show');
@@ -501,25 +467,39 @@
     }
   }
 
-  // Handle missing video gracefully
+  // ---- Video + audio-on-by-default handling ----
   const video = el('bgVideo');
   const placeholder = el('videoPlaceholder');
+  const muteBtn = el('muteBtn');
+  const muteIcon = el('muteIcon');
+
+  const ICON_UNMUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
+  const ICON_MUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+
+  function syncMuteIcon() {
+    muteIcon.innerHTML = video.muted ? ICON_MUTED : ICON_UNMUTED;
+    muteBtn.setAttribute('aria-label', video.muted ? 'Unmute background video' : 'Mute background video');
+  }
+
   video.addEventListener('loadeddata', () => placeholder.style.display = 'none');
   video.addEventListener('error', () => placeholder.style.display = 'flex');
 
-  // Mute / unmute toggle
-  const muteBtn = el('muteBtn');
-  const muteIcon = el('muteIcon');
-  const ICON_MUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
-  const ICON_UNMUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
+  // Try to autoplay WITH sound first (default request). Most browsers block this
+  // without prior interaction, so if it fails, fall back to muted autoplay and
+  // let the mute button turn sound on with one tap.
+  video.muted = false;
+  video.play().then(() => {
+    syncMuteIcon();
+  }).catch(() => {
+    video.muted = true;
+    video.play().catch(() => {});
+    syncMuteIcon();
+  });
 
   muteBtn.addEventListener('click', () => {
     video.muted = !video.muted;
-    if (!video.muted) {
-      video.play().catch(() => {});
-    }
-    muteIcon.innerHTML = video.muted ? ICON_MUTED : ICON_UNMUTED;
-    muteBtn.setAttribute('aria-label', video.muted ? 'Unmute background video' : 'Mute background video');
+    if (!video.muted) video.play().catch(() => {});
+    syncMuteIcon();
   });
 
   fetchPresence();
