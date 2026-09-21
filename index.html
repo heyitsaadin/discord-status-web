@@ -2266,6 +2266,22 @@
 
   muteBtn.addEventListener('click', toggleMute);
 
+  // Play / pause the background video. Pausing freezes whichever player is visible
+  // (and the incoming one too if a crossfade is mid-flight). Playing resumes it,
+  // unless the Background videos list is open, in which case it stays held until
+  // that closes (resumeBackground checks userPaused, so the two never fight).
+  function togglePlay() {
+    userPaused = !userPaused;
+    syncPlayIcon();
+    if (userPaused) {
+      players.forEach((p) => { try { p.pause(); } catch (err) {} });
+    } else if (!bgPausedByList) {
+      players.forEach((p) => { if (p === active() || crossfading) safePlay(p); });
+    }
+  }
+
+  playBtn.addEventListener('click', togglePlay);
+
   initVideos();
 
   // ---- Three-dots menu: expands out of the button into a glass card ----
