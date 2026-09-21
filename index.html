@@ -2452,7 +2452,7 @@
 
   // One place decides whether the tap-outside layer is up: any card being open keeps it.
   function syncScrim() {
-    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen);
+    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen || videosOpen);
   }
 
   function setInfoOpen(open) {
