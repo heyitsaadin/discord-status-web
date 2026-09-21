@@ -2376,6 +2376,8 @@
       kind.className = 'credits-kind';
       kind.textContent = single ? 'View post' : posts.length + ' videos';
 
+      // Platform icon before the @, so it's clear where the video is from.
+      a.insertAdjacentHTML('beforeend', PLATFORM_ICONS.instagram);
       a.appendChild(handle);
       a.appendChild(kind);
       a.insertAdjacentHTML('beforeend', ICON_EXTERNAL);
