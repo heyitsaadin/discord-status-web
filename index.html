@@ -711,6 +711,7 @@
     const kindIcon = el('activityKindIcon');
 
     if (spotify) {
+      lastKnownActivityAt = Date.now();
       block.classList.add('show');
       kindIcon.style.display = 'block';
       el('activityKind').textContent = 'Listening to Spotify';
