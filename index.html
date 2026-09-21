@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>status</title>
+<style>
+  :root {
+    --bg: #050505;
+    --surface: #0d0d10;
+    --surface-2: #141418;
+    --line: rgba(255,255,255,0.08);
+    --text: #f2f1ee;
+    --text-dim: #8b8b93;
+    --online: #3ba55d;
+    --idle: #e8a33d;
+    --dnd: #ed4245;
+    --offline: #5c5c66;
+    --accent: #7c6fff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ---- Full-page background video ---- */
+  .page-video {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    filter: saturate(1.05) brightness(0.55);
+  }
+
+  .page-video-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba(5,5,5,0.35) 0%, rgba(5,5,5,0.55) 100%);
+    pointer-events: none;
+  }
+
+  .video-placeholder {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.35);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16161f 100%);
+  }
+
+  body {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 24px;
+    padding-top: calc(24px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .card {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(13,13,16,0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--line);
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7);
+  }
+
+  .card-top {
+    height: 56px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%);
+  }
+
+  /* ---- Avatar / identity ---- */
+  .identity {
+    position: relative;
+    padding: 0 20px;
+    margin-top: -44px;
+  }
+
+  .avatar-wrap {
+    position: relative;
+    width: 84px;
+    height: 84px;
+  }
+
+  .avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid var(--surface);
+    background: var(--surface-2);
+    display: block;
+    object-fit: cover;
+  }
+
+  .status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 4px solid var(--surface);
+    background: var(--offline);
+    transition: background 0.3s ease;
+  }
+
+  .status-dot.pulse::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.5;
+    animation: pulse 2s ease-out infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
+  .name-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .display-name {
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .username {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .status-label {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-label .dot-inline {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--offline);
+  }
+
+  /* ---- Activity block ---- */
+  .activity {
+    margin: 16px 20px 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    display: none;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .activity.show { display: flex; }
+
+  .activity img {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #1c1c22;
+  }
+
+  .activity-text { min-width: 0; }
+
+  .activity-kind {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+
+  .activity-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .activity-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+
+  /* ---- Footer ---- */
+  .footer {
+    margin-top: 16px;
+    padding: 14px 20px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .footer .live-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .footer .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .footer .live-dot.on {
+    animation: blink 1.6s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+
+  .error-banner {
+    margin: 14px 20px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(237,66,69,0.1);
+    border: 1px solid rgba(237,66,69,0.3);
+    color: #ff8b8d;
+    font-size: 12px;
+    display: none;
+  }
+
+  .error-banner.show { display: block; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status-dot.pulse::before,
+    .footer .live-dot.on { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Swap src below for your own video file -->
+  <video class="page-video" id="bgVideo" autoplay muted loop playsinline>
+    <source src="YOUR_VIDEO_FILE.mp4" type="video/mp4">
+  </video>
+  <div class="page-video-overlay"></div>
+  <div class="video-placeholder" id="videoPlaceholder">drop your video in as the page bg — see comment in code</div>
+
+  <div class="card">
+    <div class="card-top"></div>
+
+    <div class="identity">
+      <div class="avatar-wrap">
+        <img id="avatar" src="" alt="avatar">
+        <div class="status-dot" id="statusDot"></div>
+      </div>
+
+      <div class="name-row">
+        <span class="display-name" id="displayName">—</span>
+        <span class="username" id="username">@—</span>
+      </div>
+      <div class="status-label">
+        <span class="dot-inline" id="statusDotInline"></span>
+        <span id="statusText">connecting…</span>
+      </div>
+    </div>
+
+    <div class="activity" id="activityBlock">
+      <img id="activityImg" src="" alt="">
+      <div class="activity-text">
+        <div class="activity-kind" id="activityKind">Playing</div>
+        <div class="activity-name" id="activityName">—</div>
+        <div class="activity-detail" id="activityDetail"></div>
+      </div>
+    </div>
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <div class="footer">
+      <span>discord presence</span>
+      <span class="live-tag"><span class="live-dot" id="liveDot"></span><span id="liveText">offline</span></span>
+    </div>
+  </div>
+
+<script>
+  // ==== SET YOUR DISCORD USER ID HERE ====
+  const DISCORD_USER_ID = "1382308851814240298";
+  // ========================================
+
+  const STATUS_COLORS = {
+    online: 'var(--online)',
+    idle: 'var(--idle)',
+    dnd: 'var(--dnd)',
+    offline: 'var(--offline)'
+  };
+  const STATUS_LABELS = {
+    online: 'Online',
+    idle: 'Idle',
+    dnd: 'Do Not Disturb',
+    offline: 'Offline'
+  };
+  const ACTIVITY_TYPE_LABELS = {
+    0: 'Playing',
+    1: 'Streaming',
+    2: 'Listening to',
+    3: 'Watching',
+    4: 'Status',
+    5: 'Competing in'
+  };
+
+  const el = (id) => document.getElementById(id);
+
+  function showError(msg) {
+    const banner = el('errorBanner');
+    banner.textContent = msg;
+    banner.classList.add('show');
+  }
+
+  function applyStatus(status) {
+    const color = STATUS_COLORS[status] || STATUS_COLORS.offline;
+    const dot = el('statusDot');
+    dot.style.background = color;
+    dot.classList.toggle('pulse', status === 'online');
+    el('statusDotInline').style.background = color;
+    el('statusText').textContent = STATUS_LABELS[status] || 'Offline';
+
+    const liveDot = el('liveDot');
+    liveDot.style.background = color;
+    liveDot.classList.toggle('on', status !== 'offline');
+    el('liveText').textContent = STATUS_LABELS[status] || 'Offline';
+  }
+
+  function applyActivity(activities, spotify) {
+    const block = el('activityBlock');
+
+    // Prefer Spotify if present (Lanyard gives it separately)
+    if (spotify) {
+      block.classList.add('show');
+      el('activityKind').textContent = 'Listening to Spotify';
+      el('activityName').textContent = spotify.song || 'Unknown track';
+      el('activityDetail').textContent = spotify.artist || '';
+      el('activityImg').src = spotify.album_art_url || '';
+      return;
+    }
+
+    // Otherwise use the first non-custom-status activity
+    const act = (activities || []).find(a => a.type !== 4) || (activities || [])[0];
+    if (!act) {
+      block.classList.remove('show');
+      return;
+    }
+
+    block.classList.add('show');
+    el('activityKind').textContent = ACTIVITY_TYPE_LABELS[act.type] || 'Activity';
+    el('activityName').textContent = act.name || '—';
+    el('activityDetail').textContent = act.details || act.state || '';
+
+    if (act.assets && act.assets.large_image) {
+      let img = act.assets.large_image;
+      if (img.startsWith('mp:external/')) {
+        img = 'https://media.discordapp.net/external/' + img.split('mp:external/')[1];
+      } else {
+        img = `https://cdn.discordapp.com/app-assets/${act.application_id}/${img}.png`;
+      }
+      el('activityImg').src = img;
+    } else {
+      el('activityImg').src = '';
+    }
+  }
+
+  function applyUser(user) {
+    if (!user) return;
+    const display = user.global_name || user.username || 'Unknown';
+    el('displayName').textContent = display;
+    el('username').textContent = '@' + (user.username || '—');
+    const avatarUrl = user.avatar
+      ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${user.avatar.startsWith('a_') ? 'gif' : 'png'}?size=256`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
+    el('avatar').src = avatarUrl;
+  }
+
+  async function fetchPresence() {
+    if (!DISCORD_USER_ID || DISCORD_USER_ID === 'YOUR_DISCORD_ID') {
+      showError('Add your Discord User ID in the script to go live.');
+      applyStatus('offline');
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}`);
+      const json = await res.json();
+      if (!json.success) {
+        showError('Lanyard couldn\'t find this user. Make sure you\'ve joined the Lanyard Discord server.');
+        applyStatus('offline');
+        return;
+      }
+      el('errorBanner').classList.remove('show');
+      const d = json.data;
+      applyUser(d.discord_user);
+      applyStatus(d.discord_status);
+      applyActivity(d.activities, d.listening_to_spotify ? d.spotify : null);
+    } catch (e) {
+      showError('Connection to Lanyard failed. Retrying…');
+      applyStatus('offline');
+    }
+  }
+
+  // Handle missing video gracefully
+  const video = el('bgVideo');
+  const placeholder = el('videoPlaceholder');
+  video.addEventListener('loadeddata', () => placeholder.style.display = 'none');
+  video.addEventListener('error', () => placeholder.style.display = 'flex');
+
+  fetchPresence();
+  setInterval(fetchPresence, 10000);
+</script>
+
+</body>
+</html>
