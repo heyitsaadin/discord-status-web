@@ -2258,7 +2258,7 @@
       if (!crossfading) {
         try { active().volume = TARGET_VOLUME; } catch (err) {}
       }
-      if (!bgPausedByList) safePlay(active());
+      if (!bgPausedByList && !userPaused) safePlay(active());
     }
     // Keep the list's preview video in step with the mute state.
     if (typeof previewMuteSync === 'function') previewMuteSync();
