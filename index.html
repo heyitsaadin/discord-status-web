@@ -2496,6 +2496,209 @@
   document.addEventListener('keydown', (ev) => {
     if (infoOpen && ev.key === 'Escape') setInfoOpen(false);
   });
+
+  // ---- Platform icons ----
+  // Shown before the @handle so you can tell which app a video came from. The platform is
+  // worked out from the filename in platformInfo() below. Only Instagram filenames are
+  // recognised today; to add TikTok, YouTube etc. add an icon here plus a rule there.
+  const PLATFORM_ICONS = {
+    instagram: '<svg class="plat plat-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Instagram" role="img"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>',
+    video: '<svg class="plat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>'
+  };
+  const ICON_CHEVRON = '<svg class="vid-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+  function platformInfo(name) {
+    const m = CREDIT_FILENAME.exec(name || '');
+    if (m) {
+      return {
+        key: 'instagram',
+        handle: m[1],
+        url: 'https://www.instagram.com/p/' + encodeURIComponent(m[2]) + '/'
+      };
+    }
+    return { key: 'video', handle: null, url: null };
+  }
+
+  // ---- Background videos list ----
+  const videosCard = el('videosCard');
+  const videosList = el('videosList');
+  const videosClose = el('videosClose');
+  let videosOpen = false;
+  let videoRows = [];     // one entry per playlist item: { li, head, stage, video }
+  let openIndex = -1;     // which row is expanded (-1 = none)
+
+  // While the list is open the page's own background videos are paused, so their sound
+  // can't clash with the preview. They resume on close.
+  function pauseBackground() {
+    bgPausedByList = true;
+    players.forEach((p) => { try { p.pause(); } catch (err) {} });
+  }
+
+  function resumeBackground() {
+    if (!bgPausedByList) return;
+    bgPausedByList = false;
+    // Only the visible player (or both, if a crossfade was in flight) should play.
+    players.forEach((p) => { if (p === active() || crossfading) safePlay(p); });
+  }
+
+  // Called by toggleMute so the preview obeys the mute button too.
+  function previewMuteSync() {
+    if (openIndex >= 0 && videoRows[openIndex] && videoRows[openIndex].video) {
+      videoRows[openIndex].video.muted = muted;
+    }
+  }
+
+  function closeRow() {
+    if (openIndex < 0) return;
+    const idx = openIndex;
+    const row = videoRows[idx];
+    openIndex = -1;
+    row.li.classList.remove('open');
+    row.head.setAttribute('aria-expanded', 'false');
+    const v = row.video;
+    row.video = null;
+    if (v) {
+      // Stop and release the file right away so it stops downloading and playing.
+      v.pause();
+      v.removeAttribute('src');
+      v.load();
+    }
+    // Remove the element after the collapse animation has finished.
+    setTimeout(() => { if (openIndex !== idx) row.stage.textContent = ''; }, 380);
+  }
+
+  function openRowAt(i) {
+    if (i === openIndex) { closeRow(); return; }
+    closeRow();
+    const row = videoRows[i];
+    const item = playlist[i];
+    if (!row || !item) return;
+    const info = platformInfo(item.name);
+
+    // The <video> is only created when a row is tapped, so nothing downloads until then.
+    const video = document.createElement('video');
+    video.className = 'vid-player';
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.muted = muted;
+    video.src = item.src;
+    // "One by one": when this one ends, open the next.
+    video.addEventListener('ended', () => {
+      if (openIndex === i && playlist.length > 1) openRowAt((i + 1) % playlist.length);
+    });
+
+    row.stage.textContent = '';
+    row.stage.appendChild(video);
+    if (info.url) {
+      const link = document.createElement('a');
+      link.className = 'vid-open-link';
+      link.href = info.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.insertAdjacentHTML('beforeend', ICON_EXTERNAL);
+      link.appendChild(document.createTextNode('View original post'));
+      row.stage.appendChild(link);
+    }
+
+    row.video = video;
+    row.li.classList.add('open');
+    row.head.setAttribute('aria-expanded', 'true');
+    openIndex = i;
+    safePlay(video);
+    setTimeout(() => {
+      if (openIndex === i) row.li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, 80);
+  }
+
+  function renderVideoList() {
+    videosList.textContent = '';
+    videoRows = [];
+    openIndex = -1;
+
+    if (playlist.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'credits-empty';
+      li.textContent = 'No background videos have loaded yet.';
+      videosList.appendChild(li);
+      return;
+    }
+
+    playlist.forEach((item, i) => {
+      const info = platformInfo(item.name);
+      const li = document.createElement('li');
+      li.className = 'vid-row';
+
+      const head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'vid-head';
+      head.setAttribute('aria-expanded', 'false');
+      head.tabIndex = videosOpen ? 0 : -1;
+      head.insertAdjacentHTML('beforeend', PLATFORM_ICONS[info.key]);
+
+      const label = document.createElement('span');
+      label.className = 'credits-handle';
+      label.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      label.textContent = info.handle ? '@' + info.handle : (item.name || 'Video').replace(/\.[^.]+$/, '');
+
+      const num = document.createElement('span');
+      num.className = 'vid-num';
+      num.textContent = String(i + 1);
+
+      head.appendChild(label);
+      head.appendChild(num);
+      head.insertAdjacentHTML('beforeend', ICON_CHEVRON);
+
+      const body = document.createElement('div');
+      body.className = 'vid-body';
+      const stage = document.createElement('div');
+      stage.className = 'vid-stage';
+      body.appendChild(stage);
+
+      li.appendChild(head);
+      li.appendChild(body);
+      videosList.appendChild(li);
+
+      head.addEventListener('click', () => openRowAt(i));
+      videoRows.push({ li, head, stage, video: null });
+    });
+  }
+
+  function setVideosOpen(open) {
+    if (open === videosOpen) return;
+    videosOpen = open;
+    if (open) {
+      pauseBackground();
+      renderVideoList();
+    } else {
+      closeRow();
+      resumeBackground();
+    }
+    videosCard.classList.toggle('open', open);
+    videosCard.setAttribute('aria-hidden', String(!open));
+    videosClose.tabIndex = open ? 0 : -1;
+    videoRows.forEach((r) => { r.head.tabIndex = open ? 0 : -1; });
+    syncScrim();
+    if (open) {
+      el('videosScroll').scrollTop = 0;
+      setTimeout(() => { if (videosOpen) videosClose.focus({ preventScroll: true }); }, 200);
+    } else if (videosCard.contains(document.activeElement)) {
+      moreTrigger.focus({ preventScroll: true });
+    }
+  }
+
+  // Like Credits and About: the small menu closes and this card grows from the same corner.
+  el('menuVideos').addEventListener('click', () => {
+    setMenuOpen(false);
+    setVideosOpen(true);
+  });
+
+  videosClose.addEventListener('click', () => setVideosOpen(false));
+  moreScrim.addEventListener('click', () => setVideosOpen(false));
+
+  document.addEventListener('keydown', (ev) => {
+    if (videosOpen && ev.key === 'Escape') setVideosOpen(false);
+  });
   fetchPresence();
   setInterval(fetchPresence, 10000);
 
