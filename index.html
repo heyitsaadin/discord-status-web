@@ -1272,13 +1272,27 @@
     placeholder.style.display = 'none';
 
     // Fade the very first clip in from black too, so page load feels smooth.
+    // Only this one player is animated: the idle player has no source yet, so it
+    // must not be touched (or it could briefly become audible later).
     first.style.opacity = '0';
     muted = false;
-    await startPlayback(first);
     try { first.volume = 0; } catch (err) {}
-    await runFade(first, idle(), 900);
-    try { first.volume = muted ? 0 : TARGET_VOLUME; } catch (err) {}
+    await startPlayback(first);
+    await new Promise((resolve) => {
+      const start = performance.now();
+      const FIRST_FADE_MS = 900;
+      const vol = () => (muted ? 0 : TARGET_VOLUME);
+      function frame(now) {
+        const t = Math.min((now - start) / FIRST_FADE_MS, 1);
+        first.style.opacity = String(t);
+        try { first.volume = vol() * t; } catch (err) {}
+        if (t < 1) requestAnimationFrame(frame);
+        else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
     first.style.opacity = '1';
+    try { first.volume = muted ? 0 : TARGET_VOLUME; } catch (err) {}
   }
 
   muteBtn.addEventListener('click', () => {
