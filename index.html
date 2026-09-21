@@ -2240,18 +2240,23 @@
     // reset the idle clock.
     const isNew = session.updatedAt !== acodeLastUpdatedAt;
     if (isNew) {
+      // The very first heartbeat this page sees may be hours old (the plugin stopped long
+      // ago and Lanyard still holds the last value), so check its age before trusting it.
+      // Heartbeats we watch arrive after that are live by definition.
+      const firstSighting = acodeLastUpdatedAt === 0;
+      const age = Math.max(0, Date.now() - session.updatedAt);
       acodeLastUpdatedAt = session.updatedAt;
-      acodeSeenAt = Date.now();
-    } else if (!acodeSession && (Date.now() - acodeSeenAt) > ACODE_IDLE_MS) {
-      // Same stale value we already timed out on (or first load with an old value).
+      if (firstSighting && age > ACODE_IDLE_MS) {
+        acodeSession = null;
+        hideAcodeCard();
+        return;
+      }
+      // Count the idle timeout from when the heartbeat was really sent: on a fresh load
+      // that is `age` ago, for a live one it is (about) now.
+      acodeSeenAt = Date.now() - (firstSighting ? age : 0);
+    } else if (!acodeSession) {
+      // Same value we already timed out on: stay hidden until a newer heartbeat arrives.
       return;
-    }
-
-    // First page load with a value that isn't new to us: we don't know how old it is on
-    // OUR clock, so estimate its age from the server timestamps' spacing to "now" on the
-    // server. If the heartbeat looks old, don't show it.
-    if (!acodeSession && isNew && acodeSeenAt === Date.now()) {
-      // no-op: brand-new heartbeat, fall through and show
     }
 
     acodeSession = session;
