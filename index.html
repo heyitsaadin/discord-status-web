@@ -1300,7 +1300,11 @@
     applyMuted();
     if (!muted) {
       // Unmuting is a user gesture, so the browser will now allow sound.
-      try { active().volume = TARGET_VOLUME; } catch (err) {}
+      // If a crossfade is running, leave volumes alone: the fade loop already
+      // reads `muted` every frame and will bring the audio up on its own.
+      if (!crossfading) {
+        try { active().volume = TARGET_VOLUME; } catch (err) {}
+      }
       safePlay(active());
     }
   });
