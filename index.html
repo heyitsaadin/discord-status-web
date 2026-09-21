@@ -1182,26 +1182,29 @@
 
     const outgoing = active();
     const incoming = idle();
-    const nextIndex = (currentIndex + 1) % playlist.length;
 
-    setSource(incoming, nextIndex);
-    incoming.style.opacity = '0';
-    try { incoming.volume = 0; } catch (err) {}
+    // Find the next clip that actually loads. `crossfading` stays true for this
+    // whole search, so the timeupdate watcher can't start a second crossfade while
+    // we're skipping past broken files. If every clip fails, give up quietly and
+    // let the current one keep playing.
+    let nextIndex = currentIndex;
+    let ready = false;
+    for (let tries = 0; tries < playlist.length - 1 && !ready; tries++) {
+      nextIndex = (nextIndex + 1) % playlist.length;
+      setSource(incoming, nextIndex);
+      incoming.style.opacity = '0';
+      try { incoming.volume = 0; } catch (err) {}
+      ready = await whenReady(incoming);
+    }
 
-    const ready = await whenReady(incoming);
     if (!ready) {
-      // Bad or slow file: skip it. Count the failure so a fully broken folder
-      // can't loop forever, then try the clip after it.
-      failedInARow++;
+      // Nothing else is playable. Stay on the current clip and loop it so the
+      // background never goes dead.
+      outgoing.loop = true;
       crossfading = false;
-      if (failedInARow < playlist.length) {
-        currentIndex = nextIndex;
-        return crossfadeToNext();
-      }
       return;
     }
 
-    failedInARow = 0;
     incoming.currentTime = 0;
     await safePlay(incoming);
     await runFade(incoming, outgoing, FADE_MS);
