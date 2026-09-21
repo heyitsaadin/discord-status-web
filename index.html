@@ -1352,6 +1352,8 @@
   function syncMuteIcon() {
     muteIcon.innerHTML = muted ? ICON_MUTED : ICON_UNMUTED;
     muteBtn.setAttribute('aria-label', muted ? 'Unmute background video' : 'Mute background video');
+    // Keep the three-dots menu's mute item in step with the floating mute button.
+    if (typeof syncMenuMute === 'function') syncMenuMute();
   }
 
   // Set the mute state on both players. Keeping both in sync means a crossfade
