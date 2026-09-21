@@ -730,11 +730,19 @@
 
     const act = (activities || []).find(a => a.type !== 4) || (activities || [])[0];
     if (!act) {
-      block.classList.remove('show');
-      stopProgressTicker();
+      // No activity in this poll. If we showed one very recently, treat it as
+      // a momentary gap from Discord's gateway (e.g. right after a status
+      // change like Online -> Idle) rather than the activity actually having
+      // ended, and keep the card up until the grace window elapses.
+      const withinGrace = lastKnownActivityAt && (Date.now() - lastKnownActivityAt) < ACTIVITY_GRACE_MS;
+      if (!withinGrace) {
+        block.classList.remove('show');
+        stopProgressTicker();
+      }
       return;
     }
 
+    lastKnownActivityAt = Date.now();
     block.classList.add('show');
     kindIcon.style.display = 'none';
     el('activityKind').textContent = ACTIVITY_TYPE_LABELS[act.type] || 'Activity';
