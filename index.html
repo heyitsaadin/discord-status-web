@@ -2221,8 +2221,10 @@
       if (!crossfading) {
         try { active().volume = TARGET_VOLUME; } catch (err) {}
       }
-      safePlay(active());
+      if (!bgPausedByList) safePlay(active());
     }
+    // Keep the list's preview video in step with the mute state.
+    if (typeof previewMuteSync === 'function') previewMuteSync();
   }
 
   muteBtn.addEventListener('click', toggleMute);
