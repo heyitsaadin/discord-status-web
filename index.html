@@ -2170,6 +2170,109 @@
     }
   }
 
+  // ---- Acode coding card ----
+  // The Acode plugin posts heartbeats to /api/acode, which stores the session in Lanyard's
+  // KV store under "acode" (JSON text). Lanyard returns it as d.kv.acode on the poll we
+  // already do, so this needs no extra requests.
+  //
+  // The card is shown while the last heartbeat is younger than ACODE_IDLE_MS. `updatedAt`
+  // is stamped by the server, and we compare it against the same server-side clock by
+  // remembering the offset from the first time we saw it, so a wrong phone clock can't
+  // make the card stick around or vanish early.
+  const ACODE_IDLE_MS = 2 * 60 * 1000;   // hide after ~2 minutes with no heartbeat
+  let acodeSession = null;               // last valid session, or null
+  let acodeSeenAt = 0;                   // local time we last received a NEW heartbeat
+  let acodeLastUpdatedAt = 0;            // updatedAt of that heartbeat
+  let acodeTicker = null;
+
+  function formatCodingTime(ms) {
+    if (!Number.isFinite(ms) || ms < 0) ms = 0;
+    const mins = Math.floor(ms / 60000);
+    if (mins < 1) return 'just started';
+    if (mins < 60) return mins + 'm';
+    const hrs = Math.floor(mins / 60);
+    const rem = mins % 60;
+    return rem === 0 ? hrs + 'h' : hrs + 'h ' + rem + 'm';
+  }
+
+  function hideAcodeCard() {
+    el('acodeCard').classList.remove('show');
+    if (acodeTicker) { clearInterval(acodeTicker); acodeTicker = null; }
+  }
+
+  // Runs every second while the card is up: updates the timer and enforces the idle timeout.
+  function tickAcode() {
+    if (!acodeSession) { hideAcodeCard(); return; }
+    // Time since we last got a NEW heartbeat, measured on this device's own clock,
+    // so it doesn't matter whether the phone's clock matches the server's.
+    if (Date.now() - acodeSeenAt > ACODE_IDLE_MS) {
+      acodeSession = null;
+      hideAcodeCard();
+      return;
+    }
+    // "Coding for": server-side duration between session start and the latest heartbeat,
+    // plus however long ago that heartbeat arrived here.
+    const base = acodeSession.updatedAt - acodeSession.startedAt;
+    const since = Date.now() - acodeSeenAt;
+    el('acodeTime').textContent = formatCodingTime(base + since);
+  }
+
+  function applyAcode(kv) {
+    let session = null;
+    const raw = kv && typeof kv.acode === 'string' ? kv.acode : '';
+    if (raw) {
+      try {
+        const s = JSON.parse(raw);
+        if (s && typeof s.file === 'string' && s.file && Number.isFinite(s.updatedAt) && Number.isFinite(s.startedAt)) {
+          session = s;
+        }
+      } catch (e) { /* malformed value: treat as no session */ }
+    }
+
+    if (!session) {
+      acodeSession = null;
+      hideAcodeCard();
+      return;
+    }
+
+    // Only a heartbeat with a NEWER updatedAt counts as "still coding". Lanyard keeps
+    // returning the same stored value after the plugin stops, and re-reading it must not
+    // reset the idle clock.
+    const isNew = session.updatedAt !== acodeLastUpdatedAt;
+    if (isNew) {
+      acodeLastUpdatedAt = session.updatedAt;
+      acodeSeenAt = Date.now();
+    } else if (!acodeSession && (Date.now() - acodeSeenAt) > ACODE_IDLE_MS) {
+      // Same stale value we already timed out on (or first load with an old value).
+      return;
+    }
+
+    // First page load with a value that isn't new to us: we don't know how old it is on
+    // OUR clock, so estimate its age from the server timestamps' spacing to "now" on the
+    // server. If the heartbeat looks old, don't show it.
+    if (!acodeSession && isNew && acodeSeenAt === Date.now()) {
+      // no-op: brand-new heartbeat, fall through and show
+    }
+
+    acodeSession = session;
+
+    el('acodeFile').textContent = session.file;
+    el('acodeProject').textContent = session.project || '';
+    el('acodeProject').style.display = session.project ? '' : 'none';
+    const lang = el('acodeLang');
+    if (session.language) {
+      el('acodeLangText').textContent = session.language;
+      lang.hidden = false;
+    } else {
+      lang.hidden = true;
+    }
+
+    const card = el('acodeCard');
+    if (!card.classList.contains('show')) card.classList.add('show');
+    tickAcode();
+    if (!acodeTicker) acodeTicker = setInterval(tickAcode, 1000);
+  }
+
   async function fetchPresence() {
     if (!DISCORD_USER_ID || DISCORD_USER_ID === 'YOUR_DISCORD_ID') {
       showError('Add your Discord User ID in the script to go live.');
