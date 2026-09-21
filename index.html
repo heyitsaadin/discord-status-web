@@ -2020,6 +2020,17 @@
   let activeSlot = 0;            // which of the two players is currently the active one
   let crossfading = false;
   let bgPausedByList = false;   // true while the Background videos list is open
+  let userPaused = false;       // true after the user taps the play/pause button to pause
+
+  const playBtn = el('playBtn');
+  const playIcon = el('playIcon');
+  const ICON_PAUSE = '<rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect>';
+  const ICON_PLAY = '<polygon points="6 3 20 12 6 21 6 3"></polygon>';
+
+  function syncPlayIcon() {
+    playIcon.innerHTML = userPaused ? ICON_PLAY : ICON_PAUSE;
+    playBtn.setAttribute('aria-label', userPaused ? 'Play background video' : 'Pause background video');
+  }
 
   // User's volume intent. 1 = full volume. Kept separate from `muted` so the fade
   // math always has a target to fade toward.
