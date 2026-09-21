@@ -1155,12 +1155,20 @@
   }
 
   fetchGithubActivity();
-  // NOTE: GitHub's unauthenticated API allows 60 requests/hour per IP. Polling every
-  // 20s is 180/hr, so we only poll while the tab is visible and back off if rate limited.
+
+  // GitHub's unauthenticated API allows 60 requests/hour PER VISITOR IP. Poll every
+  // 30s (120/hr) is over budget, so we poll every 60s (60/hr) while the tab is
+  // visible, skip polling while it's hidden, and re-check immediately when the
+  // tab comes back. If GitHub still rate-limits us, githubBackoffUntil pauses
+  // polling until the limit resets (see fetchGithubActivity).
   setInterval(() => {
     if (document.hidden) return;
     fetchGithubActivity();
-  }, 20000);
+  }, 60000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) fetchGithubActivity();
+  });
 </script>
 
 </body>
