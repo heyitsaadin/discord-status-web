@@ -1865,7 +1865,10 @@
       moreMenu.style.setProperty('--menu-open-h', (menuNext.style.display === 'none' ? 218 : 256) + 'px');
     }
     moreMenu.classList.toggle('open', open);
-    moreScrim.classList.toggle('show', open);
+    // Scrim stays up while EITHER card is open. `creditsOpen` is declared further
+    // down; it is only read here at click time, well after the page has finished
+    // loading, so the typeof guard just protects the very first paint.
+    moreScrim.classList.toggle('show', open || (typeof creditsOpen !== 'undefined' && creditsOpen));
     moreTrigger.setAttribute('aria-expanded', String(open));
     moreTrigger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     moreContent.setAttribute('aria-hidden', String(!open));
