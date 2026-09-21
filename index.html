@@ -2298,6 +2298,7 @@
       applyStatus(d.discord_status);
       applyActivity(d.activities, d.listening_to_spotify ? d.spotify : null);
       applyTag(d.kv);
+      applyAcode(d.kv);
     } catch (e) {
       showError('Connection to Lanyard failed. Retrying…');
       applyStatus('offline');
