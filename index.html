@@ -1055,7 +1055,6 @@
   }
 
   // ---- Video + audio-on-by-default handling ----
-  const video = el('bgVideo');
   const placeholder = el('videoPlaceholder');
   const muteBtn = el('muteBtn');
   const muteIcon = el('muteIcon');
@@ -1063,63 +1062,182 @@
   const ICON_UNMUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
   const ICON_MUTED = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
 
-  function syncMuteIcon() {
-    muteIcon.innerHTML = video.muted ? ICON_MUTED : ICON_UNMUTED;
-    muteBtn.setAttribute('aria-label', video.muted ? 'Unmute background video' : 'Mute background video');
-  }
-
-  // ---- Multi-video playlist ----
+  // ---- Multi-video playlist with crossfade ----
   // The list of videos comes from /api/videos, which scans the /background-videos
   // folder. Add or remove files there and the page picks them up, no code changes.
-  // Videos play one after another; when the last one ends it wraps to the first.
+  //
+  // Two <video> players are stacked. One is "active" (visible, audible). Shortly
+  // before it ends, the other is loaded with the next clip and started, then over
+  // FADE_MS the incoming player fades IN (opacity 0 -> 1, volume 0 -> target) while
+  // the outgoing one fades OUT (opacity 1 -> 0, volume target -> 0). When the fade
+  // finishes the outgoing player is stopped and the two swap roles.
+  //
+  // Volume is animated by hand (not with CSS) because <video> volume has no
+  // transition support. Note: iOS Safari ignores programmatic volume, so on
+  // iPhones the picture crossfades but the audio switches at the end of the fade.
+  const FADE_MS = 1500;          // length of the crossfade
+  const players = [el('bgVideoA'), el('bgVideoB')];
+
   let playlist = [];
   let currentIndex = 0;
+  let activeSlot = 0;            // which of the two players is currently the active one
+  let crossfading = false;
   let failedInARow = 0;
+
+  // User's volume intent. 1 = full volume. Kept separate from `muted` so the fade
+  // math always has a target to fade toward.
+  const TARGET_VOLUME = 1;
+  let muted = false;
+
+  const active = () => players[activeSlot];
+  const idle = () => players[1 - activeSlot];
+
+  function syncMuteIcon() {
+    muteIcon.innerHTML = muted ? ICON_MUTED : ICON_UNMUTED;
+    muteBtn.setAttribute('aria-label', muted ? 'Unmute background video' : 'Mute background video');
+  }
+
+  // Set the mute state on both players. Keeping both in sync means a crossfade
+  // never briefly plays sound after the user muted.
+  function applyMuted() {
+    players.forEach((p) => { p.muted = muted; });
+    syncMuteIcon();
+  }
+
+  function safePlay(p) {
+    const attempt = p.play();
+    if (!attempt || typeof attempt.catch !== 'function') return Promise.resolve(true);
+    return attempt.then(() => true).catch(() => false);
+  }
 
   // Try to play WITH sound first. Most browsers block that without prior
   // interaction, so if it fails, fall back to muted playback and let the mute
   // button turn sound on with one tap. Once the user has unmuted, that choice
   // sticks for every following video.
-  function playCurrent() {
-    video.play().then(() => {
-      syncMuteIcon();
-    }).catch(() => {
-      video.muted = true;
-      video.play().catch(() => {});
-      syncMuteIcon();
+  async function startPlayback(p) {
+    p.muted = muted;
+    let ok = await safePlay(p);
+    if (!ok && !muted) {
+      muted = true;
+      applyMuted();
+      ok = await safePlay(p);
+    }
+    return ok;
+  }
+
+  function setSource(p, index) {
+    p.src = playlist[index].src;
+    p.loop = false;
+    p.load();
+  }
+
+  // Resolves when the player has enough data to start without stalling, or after
+  // a timeout so a slow/broken file can't hang the playlist forever.
+  function whenReady(p, timeoutMs = 8000) {
+    return new Promise((resolve) => {
+      if (p.readyState >= 3) return resolve(true);
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        p.removeEventListener('canplay', onReady);
+        p.removeEventListener('error', onFail);
+        clearTimeout(timer);
+        resolve(ok);
+      };
+      const onReady = () => finish(true);
+      const onFail = () => finish(false);
+      const timer = setTimeout(() => finish(false), timeoutMs);
+      p.addEventListener('canplay', onReady);
+      p.addEventListener('error', onFail);
     });
   }
 
-  function loadVideo(index) {
-    if (playlist.length === 0) return;
-    currentIndex = ((index % playlist.length) + playlist.length) % playlist.length;
-    video.src = playlist[currentIndex].src;
-    // A single video just loops itself; with several, the 'ended' handler advances.
-    video.loop = playlist.length === 1;
-    video.load();
-    playCurrent();
+  // Animate two players' opacity + volume in opposite directions over `ms`.
+  function runFade(incoming, outgoing, ms) {
+    return new Promise((resolve) => {
+      const start = performance.now();
+      const vol = muted ? 0 : TARGET_VOLUME;
+      function frame(now) {
+        const t = Math.min((now - start) / ms, 1);
+        // Ease in-out so the fade starts and ends softly instead of linearly.
+        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        incoming.style.opacity = String(e);
+        outgoing.style.opacity = String(1 - e);
+        try {
+          incoming.volume = vol * e;
+          outgoing.volume = vol * (1 - e);
+        } catch (err) { /* some browsers restrict programmatic volume */ }
+        if (t < 1) requestAnimationFrame(frame);
+        else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
   }
 
-  function nextVideo() {
-    loadVideo(currentIndex + 1);
-  }
+  // Start the next clip underneath the current one and fade between them.
+  async function crossfadeToNext() {
+    if (crossfading || playlist.length < 2) return;
+    crossfading = true;
 
-  video.addEventListener('loadeddata', () => {
-    failedInARow = 0;
-    placeholder.style.display = 'none';
-  });
+    const outgoing = active();
+    const incoming = idle();
+    const nextIndex = (currentIndex + 1) % playlist.length;
 
-  video.addEventListener('ended', nextVideo);
+    setSource(incoming, nextIndex);
+    incoming.style.opacity = '0';
+    try { incoming.volume = 0; } catch (err) {}
 
-  video.addEventListener('error', () => {
-    // A broken/unsupported file shouldn't stall the page: skip to the next one.
-    // If every video in a row fails, stop retrying and show the placeholder.
-    failedInARow++;
-    if (playlist.length > 1 && failedInARow < playlist.length) {
-      nextVideo();
-    } else {
-      placeholder.style.display = 'flex';
+    const ready = await whenReady(incoming);
+    if (!ready) {
+      // Bad or slow file: skip it. Count the failure so a fully broken folder
+      // can't loop forever, then try the clip after it.
+      failedInARow++;
+      crossfading = false;
+      if (failedInARow < playlist.length) {
+        currentIndex = nextIndex;
+        return crossfadeToNext();
+      }
+      return;
     }
+
+    failedInARow = 0;
+    incoming.currentTime = 0;
+    await safePlay(incoming);
+    await runFade(incoming, outgoing, FADE_MS);
+
+    // Fade done: park the old player and swap roles.
+    outgoing.pause();
+    outgoing.style.opacity = '0';
+    try { outgoing.volume = muted ? 0 : TARGET_VOLUME; } catch (err) {}
+    incoming.style.opacity = '1';
+    try { incoming.volume = muted ? 0 : TARGET_VOLUME; } catch (err) {}
+
+    activeSlot = 1 - activeSlot;
+    currentIndex = nextIndex;
+    crossfading = false;
+  }
+
+  // Watch the active player and kick off the crossfade so it FINISHES right as the
+  // clip ends (i.e. begins FADE_MS before the end). Also handles very short clips.
+  function watchActive() {
+    const p = active();
+    if (crossfading || !p.duration || !isFinite(p.duration)) return;
+    const remaining = p.duration - p.currentTime;
+    if (remaining <= FADE_MS / 1000 + 0.1) crossfadeToNext();
+  }
+
+  // Fallback: if a clip somehow ends without the watcher catching it (tab was in the
+  // background and timers were throttled), still advance, just without the fade.
+  function onEnded(ev) {
+    if (ev.target !== active() || crossfading) return;
+    if (playlist.length < 2) return; // single clip is handled by loop = true
+    crossfadeToNext();
+  }
+
+  players.forEach((p) => {
+    p.addEventListener('timeupdate', watchActive);
+    p.addEventListener('ended', onEnded);
   });
 
   async function initVideos() {
@@ -1136,19 +1254,42 @@
       return;
     }
 
-    video.muted = false;
     // Start on a random video so repeat visitors don't always see the same one first.
-    loadVideo(Math.floor(Math.random() * playlist.length));
+    currentIndex = Math.floor(Math.random() * playlist.length);
+    activeSlot = 0;
+    const first = active();
+    setSource(first, currentIndex);
+    // With a single clip there is nothing to crossfade to, so just loop it.
+    first.loop = playlist.length === 1;
+
+    const ready = await whenReady(first, 15000);
+    if (!ready) {
+      placeholder.style.display = 'flex';
+      return;
+    }
+    placeholder.style.display = 'none';
+
+    // Fade the very first clip in from black too, so page load feels smooth.
+    first.style.opacity = '0';
+    muted = false;
+    await startPlayback(first);
+    try { first.volume = 0; } catch (err) {}
+    await runFade(first, idle(), 900);
+    try { first.volume = muted ? 0 : TARGET_VOLUME; } catch (err) {}
+    first.style.opacity = '1';
   }
 
   muteBtn.addEventListener('click', () => {
-    video.muted = !video.muted;
-    if (!video.muted) video.play().catch(() => {});
-    syncMuteIcon();
+    muted = !muted;
+    applyMuted();
+    if (!muted) {
+      // Unmuting is a user gesture, so the browser will now allow sound.
+      try { active().volume = TARGET_VOLUME; } catch (err) {}
+      safePlay(active());
+    }
   });
 
   initVideos();
-
   fetchPresence();
   setInterval(fetchPresence, 10000);
 
