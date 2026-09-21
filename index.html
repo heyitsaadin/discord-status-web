@@ -1090,35 +1090,55 @@
     }
   }
 
+  // The card behaves like a transient notification: it shows the single most
+  // recent public GitHub event, then hides itself GITHUB_DISPLAY_MS after
+  // that event first appeared. If a newer event shows up (e.g. a commit,
+  // then later a push becomes the latest event) the id changes, the display
+  // timer resets, and the card shows the new latest event instead.
+  const GITHUB_DISPLAY_MS = 30000; // stays visible for 30s per event
+  let currentGithubEventId = null;
+  let githubShownAt = 0;
+  let githubHideTimer = null;
+
   async function fetchGithubActivity() {
     const block = el('githubActivityBlock');
     try {
       const res = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/events/public?per_page=1`);
-      if (!res.ok) {
-        block.classList.remove('show');
-        return;
-      }
+      if (!res.ok) return;
       const events = await res.json();
-      if (!Array.isArray(events) || events.length === 0) {
-        block.classList.remove('show');
-        return;
-      }
+      if (!Array.isArray(events) || events.length === 0) return;
+
       const evt = events[0];
-      const { kind, name, detail } = describeGithubEvent(evt);
-      el('githubActivityKind').textContent = kind;
-      el('githubActivityName').textContent = name;
-      el('githubActivityDetail').textContent = detail;
-      el('githubActivityTime').textContent = timeAgo(evt.created_at);
-      block.href = `https://github.com/${evt.repo && evt.repo.name ? evt.repo.name : GITHUB_USERNAME}`;
-      block.classList.add('show');
+
+      if (evt.id !== currentGithubEventId) {
+        // A genuinely new latest event -- render it and restart the 30s clock.
+        currentGithubEventId = evt.id;
+        githubShownAt = Date.now();
+
+        const { kind, name, detail } = describeGithubEvent(evt);
+        el('githubActivityKind').textContent = kind;
+        el('githubActivityName').textContent = name;
+        el('githubActivityDetail').textContent = detail;
+        el('githubActivityTime').textContent = timeAgo(evt.created_at);
+        block.href = `https://github.com/${evt.repo && evt.repo.name ? evt.repo.name : GITHUB_USERNAME}`;
+        block.classList.add('show');
+
+        if (githubHideTimer) clearTimeout(githubHideTimer);
+        githubHideTimer = setTimeout(() => {
+          block.classList.remove('show');
+        }, GITHUB_DISPLAY_MS);
+      } else if (block.classList.contains('show')) {
+        // Same event as before -- just keep the "Xm ago" timestamp fresh
+        // while the card is still on screen.
+        el('githubActivityTime').textContent = timeAgo(evt.created_at);
+      }
     } catch (e) {
       // Fail quietly -- this block is a bonus, not core to the page.
-      block.classList.remove('show');
     }
   }
 
   fetchGithubActivity();
-  setInterval(fetchGithubActivity, 120000); // GitHub's unauthenticated rate limit is 60 req/hr -- 2 min interval keeps this well under it
+  setInterval(fetchGithubActivity, 10000); // check every 10s so a new event is picked up quickly; well under GitHub's 60 req/hr unauthenticated limit
 </script>
 
 </body>
