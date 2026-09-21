@@ -337,6 +337,222 @@
   .mute-btn:active { transform: scale(0.94); }
   .mute-btn svg { width: 20px; height: 20px; }
 
+  /* ---- Top-right "more" menu: a liquid-glass circle that MORPHS into a card ----
+     It is ONE element. Collapsed, it is a 42px circle (identical glass recipe to
+     .liquid-btn). Expanded, the same element grows to the card size while its radius
+     changes, anchored at the top-right corner, so the card visibly comes out of the
+     button instead of appearing as a separate popup.
+
+     Every animated property lives on this one element and shares the same timing, so
+     size, corner radius and contents move as a single motion. The spring easing has a
+     small overshoot (like iOS) on the way out and a plain ease on the way back. */
+  .more-menu {
+    --menu-ease-out: cubic-bezier(0.32, 1.28, 0.42, 1);   /* soft overshoot, opening */
+    --menu-ease-in: cubic-bezier(0.4, 0, 0.2, 1);         /* clean settle, closing */
+    --menu-open-w: 232px;
+    --menu-open-h: 176px;
+    position: fixed;
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    right: 20px;
+    z-index: 5;
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--text);
+    /* Expand from the top-right corner, where the button sits. */
+    transform-origin: top right;
+
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.08) 32%, rgba(255,255,255,0) 55%),
+      rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px) saturate(1.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.6),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 10px 24px -8px rgba(0,0,0,0.55),
+      0 2px 6px rgba(0,0,0,0.3);
+
+    transition:
+      width 0.5s var(--menu-ease-in),
+      height 0.5s var(--menu-ease-in),
+      border-radius 0.5s var(--menu-ease-in),
+      box-shadow 0.5s ease;
+  }
+
+  .more-menu.open {
+    width: var(--menu-open-w);
+    height: var(--menu-open-h);
+    border-radius: 26px;
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.6),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 22px 44px -12px rgba(0,0,0,0.65),
+      0 4px 12px rgba(0,0,0,0.35);
+    transition:
+      width 0.55s var(--menu-ease-out),
+      height 0.55s var(--menu-ease-out),
+      border-radius 0.55s var(--menu-ease-out),
+      box-shadow 0.55s ease;
+  }
+
+  /* Same highlight sheen and rim light as .liquid-btn / .activity. The radius is
+     inherited so it morphs together with the container. */
+  .more-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 28%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.18) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .more-menu::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 200deg, rgba(255,255,255,0.05), rgba(255,255,255,0.65) 15%, rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.05) 65%, rgba(255,255,255,0.45) 85%, rgba(255,255,255,0.05));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: 0;
+  }
+
+  /* The three-dots trigger fills the collapsed circle. It sits on top and fades
+     out (with a slight rotate + shrink) as the card opens. */
+  .more-trigger {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 42px;
+    height: 42px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.22s ease 0.05s, transform 0.4s var(--menu-ease-in);
+  }
+
+  .more-trigger svg {
+    width: 18px;
+    height: 18px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
+
+  .more-menu.open .more-trigger {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.6);
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.4s var(--menu-ease-out);
+  }
+
+  /* Card contents. Fixed width so text never re-wraps while the container is still
+     growing; the container's overflow: hidden simply reveals it. Hidden and slightly
+     scaled while collapsed, then fades in a beat after the expansion starts. */
+  .more-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--menu-open-w);
+    padding: 14px 12px 12px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    transform: scale(0.92);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.35s var(--menu-ease-in);
+  }
+
+  .more-menu.open .more-content {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+    transition: opacity 0.3s ease 0.12s, transform 0.5s var(--menu-ease-out) 0.05s;
+  }
+
+  .more-title {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    padding: 0 8px 6px;
+  }
+
+  .more-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 10px 8px;
+    border: 0;
+    border-radius: 14px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .more-item:hover { background: rgba(255,255,255,0.12); }
+  .more-item:active { background: rgba(255,255,255,0.18); transform: scale(0.98); }
+
+  .more-item svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
+
+  .more-item .more-item-label { flex: 1; min-width: 0; }
+
+  .more-item .more-item-hint {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+
+  .more-divider {
+    height: 1px;
+    margin: 4px 8px;
+    background: rgba(255,255,255,0.16);
+  }
+
+  /* Tapping anywhere outside closes the menu. This invisible layer catches that tap. */
+  .more-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    display: none;
+    background: transparent;
+  }
+
+  .more-scrim.show { display: block; }
+
   /* ---- Social links: iOS "Liquid Glass" buttons ---- */
   .social-dock {
     position: relative;
