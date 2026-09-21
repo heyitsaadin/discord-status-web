@@ -1009,6 +1009,21 @@
     }
   }
 
+  // Custom tag: set from Discord with /tag, stored in Lanyard's KV store under the
+  // key "tag" and returned by Lanyard as d.kv.tag. It doesn't depend on your online
+  // status, so it still shows while you're offline or invisible.
+  function applyTag(kv) {
+    const pill = el('tagPill');
+    const raw = kv && typeof kv.tag === 'string' ? kv.tag.trim() : '';
+    if (raw) {
+      pill.textContent = raw.slice(0, 40);
+      pill.classList.add('show');
+    } else {
+      pill.textContent = '';
+      pill.classList.remove('show');
+    }
+  }
+
   async function fetchPresence() {
     if (!DISCORD_USER_ID || DISCORD_USER_ID === 'YOUR_DISCORD_ID') {
       showError('Add your Discord User ID in the script to go live.');
