@@ -2261,6 +2261,61 @@
   document.addEventListener('keydown', (ev) => {
     if (creditsOpen && ev.key === 'Escape') setCreditsOpen(false);
   });
+
+  // ---- About ----
+  const infoCard = el('infoCard');
+  const infoClose = el('infoClose');
+  const infoAvatar = el('infoAvatar');
+  const infoFocusables = Array.from(infoCard.querySelectorAll('a, button'));
+  let infoOpen = false;
+
+  // Keep the whole card out of the tab order until it is open.
+  infoFocusables.forEach((n) => { n.tabIndex = -1; });
+
+  // One place decides whether the tap-outside layer is up: any card being open keeps it.
+  function syncScrim() {
+    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen);
+  }
+
+  function setInfoOpen(open) {
+    if (open === infoOpen) return;
+    infoOpen = open;
+    infoCard.classList.toggle('open', open);
+    infoCard.setAttribute('aria-hidden', String(!open));
+    infoFocusables.forEach((n) => { n.tabIndex = open ? 0 : -1; });
+    syncScrim();
+    if (open) {
+      // Reuse the live Discord avatar already loaded on the page, if it has loaded.
+      const av = el('avatar');
+      if (av.getAttribute('src') && av.complete && av.naturalWidth > 0) {
+        infoAvatar.src = av.src;
+        infoAvatar.hidden = false;
+      }
+      el('infoScroll').scrollTop = 0;
+      setTimeout(() => { if (infoOpen) infoClose.focus({ preventScroll: true }); }, 200);
+    } else if (infoCard.contains(document.activeElement)) {
+      moreTrigger.focus({ preventScroll: true });
+    }
+  }
+
+  // About replaces the menu: the small card closes and this one grows out of the same corner.
+  el('menuInfo').addEventListener('click', () => {
+    setMenuOpen(false);
+    setInfoOpen(true);
+  });
+
+  infoClose.addEventListener('click', () => setInfoOpen(false));
+  moreScrim.addEventListener('click', () => setInfoOpen(false));
+
+  // "See credits" swaps one card for the other.
+  el('infoCreditsLink').addEventListener('click', () => {
+    setInfoOpen(false);
+    setCreditsOpen(true);
+  });
+
+  document.addEventListener('keydown', (ev) => {
+    if (infoOpen && ev.key === 'Escape') setInfoOpen(false);
+  });
   fetchPresence();
   setInterval(fetchPresence, 10000);
 
