@@ -21,6 +21,11 @@ const COMMAND = {
   name: 'tag',
   type: 1,
   description: 'Set the tag shown on my live status page',
+  // 0 = app installed in a server, 1 = app installed on your own account
+  // (a user install works in any server and in DMs, no server invite needed)
+  integration_types: [0, 1],
+  // 0 = servers, 1 = DMs with the app, 2 = group DMs and other DMs
+  contexts: [0, 1, 2],
   options: [
     {
       type: 3,
