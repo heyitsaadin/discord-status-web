@@ -1062,26 +1062,86 @@
     muteBtn.setAttribute('aria-label', video.muted ? 'Unmute background video' : 'Mute background video');
   }
 
-  video.addEventListener('loadeddata', () => placeholder.style.display = 'none');
-  video.addEventListener('error', () => placeholder.style.display = 'flex');
+  // ---- Multi-video playlist ----
+  // The list of videos comes from /api/videos, which scans the /background-videos
+  // folder. Add or remove files there and the page picks them up, no code changes.
+  // Videos play one after another; when the last one ends it wraps to the first.
+  let playlist = [];
+  let currentIndex = 0;
+  let failedInARow = 0;
 
-  // Try to autoplay WITH sound first (default request). Most browsers block this
-  // without prior interaction, so if it fails, fall back to muted autoplay and
-  // let the mute button turn sound on with one tap.
-  video.muted = false;
-  video.play().then(() => {
-    syncMuteIcon();
-  }).catch(() => {
-    video.muted = true;
-    video.play().catch(() => {});
-    syncMuteIcon();
+  // Try to play WITH sound first. Most browsers block that without prior
+  // interaction, so if it fails, fall back to muted playback and let the mute
+  // button turn sound on with one tap. Once the user has unmuted, that choice
+  // sticks for every following video.
+  function playCurrent() {
+    video.play().then(() => {
+      syncMuteIcon();
+    }).catch(() => {
+      video.muted = true;
+      video.play().catch(() => {});
+      syncMuteIcon();
+    });
+  }
+
+  function loadVideo(index) {
+    if (playlist.length === 0) return;
+    currentIndex = ((index % playlist.length) + playlist.length) % playlist.length;
+    video.src = playlist[currentIndex].src;
+    // A single video just loops itself; with several, the 'ended' handler advances.
+    video.loop = playlist.length === 1;
+    video.load();
+    playCurrent();
+  }
+
+  function nextVideo() {
+    loadVideo(currentIndex + 1);
+  }
+
+  video.addEventListener('loadeddata', () => {
+    failedInARow = 0;
+    placeholder.style.display = 'none';
   });
+
+  video.addEventListener('ended', nextVideo);
+
+  video.addEventListener('error', () => {
+    // A broken/unsupported file shouldn't stall the page: skip to the next one.
+    // If every video in a row fails, stop retrying and show the placeholder.
+    failedInARow++;
+    if (playlist.length > 1 && failedInARow < playlist.length) {
+      nextVideo();
+    } else {
+      placeholder.style.display = 'flex';
+    }
+  });
+
+  async function initVideos() {
+    try {
+      const res = await fetch('/api/videos');
+      const json = await res.json();
+      playlist = Array.isArray(json.videos) ? json.videos : [];
+    } catch (e) {
+      playlist = [];
+    }
+
+    if (playlist.length === 0) {
+      placeholder.style.display = 'flex';
+      return;
+    }
+
+    video.muted = false;
+    // Start on a random video so repeat visitors don't always see the same one first.
+    loadVideo(Math.floor(Math.random() * playlist.length));
+  }
 
   muteBtn.addEventListener('click', () => {
     video.muted = !video.muted;
     if (!video.muted) video.play().catch(() => {});
     syncMuteIcon();
   });
+
+  initVideos();
 
   fetchPresence();
   setInterval(fetchPresence, 10000);
