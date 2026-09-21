@@ -1051,9 +1051,16 @@
 
     switch (evt.type) {
       case 'PushEvent': {
-        const commits = evt.payload && evt.payload.commits;
-        const n = commits ? commits.length : 0;
-        const lastMsg = n > 0 ? commits[n - 1].message.split('\n')[0] : '';
+        const payload = evt.payload || {};
+        const commits = payload.commits;
+        // GitHub's events API can return an empty/truncated `commits` array
+        // even when the push had real commits -- `distinct_size` (falling
+        // back to `size`) is the field that reliably reflects the actual
+        // commit count, so use that instead of commits.length.
+        const n = typeof payload.distinct_size === 'number'
+          ? payload.distinct_size
+          : (typeof payload.size === 'number' ? payload.size : (commits ? commits.length : 0));
+        const lastMsg = commits && commits.length > 0 ? commits[commits.length - 1].message.split('\n')[0] : '';
         return { kind, name: repo, detail: lastMsg || `${n} commit${n === 1 ? '' : 's'}` };
       }
       case 'PullRequestEvent': {
