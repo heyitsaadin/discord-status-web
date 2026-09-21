@@ -2574,6 +2574,8 @@
   function resumeBackground() {
     if (!bgPausedByList) return;
     bgPausedByList = false;
+    // If the user paused with the play/pause button, leave it paused.
+    if (userPaused) return;
     // Only the visible player (or both, if a crossfade was in flight) should play.
     players.forEach((p) => { if (p === active() || crossfading) safePlay(p); });
   }
