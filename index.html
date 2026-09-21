@@ -723,9 +723,11 @@
 </head>
 <body>
 
-  <!-- Background video: the source is filled in by script from the videos in /background-videos.
-       No `loop` attribute: the script plays the videos one after another and loops the playlist. -->
-  <video class="page-video" id="bgVideo" playsinline></video>
+  <!-- Background videos: two stacked players so the script can crossfade between clips
+       (picture AND sound) instead of cutting. Sources are filled in from /background-videos.
+       Neither has a `loop` attribute: the script advances and wraps the playlist itself. -->
+  <video class="page-video" id="bgVideoA" playsinline preload="auto"></video>
+  <video class="page-video" id="bgVideoB" playsinline preload="auto"></video>
   <div class="motion-streaks"></div>
   <div class="vignette"></div>
   <div class="video-placeholder" id="videoPlaceholder">add videos to the background-videos folder</div>
