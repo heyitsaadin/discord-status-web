@@ -113,6 +113,44 @@
     object-fit: cover;
   }
 
+  .avatar-decoration {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
+    pointer-events: none;
+    display: none;
+  }
+
+  .avatar-decoration.show { display: block; }
+
+  /* ---- Mute toggle ---- */
+  .mute-btn {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: 20px;
+    z-index: 3;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(13,13,16,0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .mute-btn:hover { background: rgba(20,20,24,0.85); }
+  .mute-btn:active { transform: scale(0.94); }
+
+  .mute-btn svg { width: 20px; height: 20px; }
+
   .status-dot {
     position: absolute;
     bottom: 2px;
