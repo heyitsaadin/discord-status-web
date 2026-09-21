@@ -43,6 +43,30 @@ flowchart LR
 | Latest push / PR / issue | GitHub public events API | every 60 s (paused while the tab is hidden) |
 | Link-preview image | `/api/avatar` serverless function | cached for 1 hour |
 
+### Custom tag (`/tag`)
+
+A small pill under the username (e.g. "📖 Reading", "🌱 Touching grass") that I change from my own Discord server with a slash command.
+
+```
+/tag preset:💻 Coding          pick from a list
+/tag custom:on a train         type anything (max 40 characters)
+/tag preset:✖ Clear tag        remove it
+```
+
+How it works: Discord sends the command to `api/discord.js` on Vercel, which checks Discord's signature, makes sure it's me, and saves the text into my [Lanyard KV](https://github.com/Phineas/lanyard) store under the key `tag`. The page already polls Lanyard every 10 seconds, so it picks the tag up from there. Because it lives in Lanyard, it shows even when I'm offline or invisible.
+
+**Setup (one time):**
+
+1. Create an app at the [Discord Developer Portal](https://discord.com/developers/applications). Copy the **Application ID** and **Public Key** from *General Information*.
+2. Open the **Bot** tab and reset the token. Copy it once; Discord won't show it again.
+3. DM the Lanyard bot `.apikey` to get a Lanyard API key.
+4. In Vercel → Settings → Environment Variables, add `DISCORD_PUBLIC_KEY`, `DISCORD_APP_ID`, `DISCORD_BOT_TOKEN` and `LANYARD_API_KEY`, then redeploy.
+5. Back in the Developer Portal, set **Interactions Endpoint URL** to `https://YOUR-SITE.vercel.app/api/discord`. Discord tests it when you save.
+6. Invite the app to your server (*Installation* → Install Link, with the `applications.commands` scope).
+7. Open `https://YOUR-SITE.vercel.app/api/setup-commands` once to register `/tag`. To change the preset list, edit `api/setup-commands.js` and open that URL again.
+
+Only the Discord user ID set as `OWNER_ID` in `api/discord.js` can change the tag.
+
 ### The 30-second GitHub card
 
 The card only shows an event while it is **less than 30 seconds old**, measured from the event's real timestamp on GitHub — not from when you opened the page. So opening the site an hour after a push shows nothing, and pushing while the page is open makes the card appear and then vanish on its own.
