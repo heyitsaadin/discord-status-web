@@ -90,6 +90,76 @@
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 
+  /* ---- Top-left "Online" status pill (liquid glass) ---- */
+  .status-pill {
+    position: fixed;
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    left: 20px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px 9px 13px;
+    border-radius: 999px;
+    isolation: isolate;
+
+    background:
+      radial-gradient(circle at 25% 20%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0) 55%),
+      rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px) saturate(1.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 10px 24px -8px rgba(0,0,0,0.5),
+      0 2px 6px rgba(0,0,0,0.28);
+  }
+
+  .status-pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.15) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  .status-pill .dot-inline {
+    position: relative;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--offline);
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .status-pill .dot-inline.pulse::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.5;
+    animation: pulse 2s ease-out infinite;
+  }
+
+  .status-pill span#statusText {
+    position: relative;
+    z-index: 1;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
   /* ---- Floating identity, no card ---- */
   .identity {
     position: relative;
@@ -152,11 +222,6 @@
     animation: pulse 2s ease-out infinite;
   }
 
-  @keyframes pulse {
-    0% { transform: scale(0.9); opacity: 0.5; }
-    100% { transform: scale(1.9); opacity: 0; }
-  }
-
   .name-block {
     display: flex;
     flex-direction: column;
@@ -174,79 +239,6 @@
   .username {
     font-size: 14px;
     color: var(--text-dim);
-  }
-
-  .status-label {
-    margin-top: 2px;
-    font-size: 13px;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .status-label .dot-inline {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--offline);
-  }
-
-  /* ---- Activity pill ---- */
-  .activity {
-    margin-top: 4px;
-    padding: 10px 16px;
-    border-radius: 999px;
-    background: rgba(20,20,24,0.5);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.1);
-    display: none;
-    gap: 10px;
-    align-items: center;
-    max-width: 320px;
-  }
-
-  .activity.show { display: flex; }
-
-  .activity img {
-    width: 32px;
-    height: 32px;
-    border-radius: 7px;
-    object-fit: cover;
-    flex-shrink: 0;
-    background: #1c1c22;
-  }
-
-  .activity-text {
-    min-width: 0;
-    text-align: left;
-  }
-
-  .activity-kind {
-    font-size: 9.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    margin-bottom: 1px;
-  }
-
-  .activity-name {
-    font-size: 12.5px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 220px;
-  }
-
-  .activity-detail {
-    font-size: 11px;
-    color: var(--text-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 220px;
   }
 
   .error-banner {
@@ -375,9 +367,171 @@
       0 6px 14px -6px rgba(0,0,0,0.5);
   }
 
+  /* ---- Activity / Spotify block: liquid glass, wider + taller, below the dock ---- */
+  .activity {
+    position: relative;
+    z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    max-width: 360px;
+    min-width: 300px;
+    padding: 16px 18px;
+    border-radius: 26px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    isolation: isolate;
+
+    background:
+      radial-gradient(circle at 25% 15%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0) 55%),
+      rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 14px 30px -10px rgba(0,0,0,0.55),
+      0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .activity::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.15) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  .activity::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 26px;
+    padding: 1px;
+    background: conic-gradient(from 200deg, rgba(255,255,255,0.04), rgba(255,255,255,0.5) 15%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.04) 65%, rgba(255,255,255,0.35) 85%, rgba(255,255,255,0.04));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.9;
+  }
+
+  .activity.show { display: flex; }
+
+  .activity-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 13px;
+    align-items: center;
+  }
+
+  .activity img {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #1c1c22;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .activity-text {
+    min-width: 0;
+    text-align: left;
+    flex: 1;
+  }
+
+  .activity-kind {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .activity-kind svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+  }
+
+  .activity-name {
+    font-size: 14.5px;
+    font-weight: 650;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+  }
+
+  .activity-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin-top: 1px;
+  }
+
+  /* ---- Playback progress (Spotify: real elapsed time; other activities: hidden) ---- */
+  .activity-progress {
+    position: relative;
+    z-index: 1;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .activity-progress.show { display: flex; }
+
+  .progress-track {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.18);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.75));
+    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    transition: width 0.9s linear;
+  }
+
+  .progress-times {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-dim);
+    letter-spacing: 0.01em;
+  }
+
+  .error-banner {
+    margin-top: 4px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .liquid-btn { transition: none; }
     .status-dot.pulse::before { animation: none; }
+    .status-pill .dot-inline.pulse::before { animation: none; }
+    .progress-fill { transition: none; }
   }
 </style>
 </head>
@@ -390,6 +544,12 @@
   <div class="motion-streaks"></div>
   <div class="vignette"></div>
   <div class="video-placeholder" id="videoPlaceholder">drop your video in as the page bg — see comment in code</div>
+
+  <!-- Top-left Online status pill -->
+  <div class="status-pill">
+    <span class="dot-inline" id="statusDotInline"></span>
+    <span id="statusText">connecting…</span>
+  </div>
 
   <button class="mute-btn" id="muteBtn" aria-label="Mute background video">
     <svg id="muteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -409,19 +569,6 @@
     <div class="name-block">
       <span class="display-name" id="displayName">—</span>
       <span class="username" id="username">@—</span>
-      <div class="status-label">
-        <span class="dot-inline" id="statusDotInline"></span>
-        <span id="statusText">connecting…</span>
-      </div>
-    </div>
-
-    <div class="activity" id="activityBlock">
-      <img id="activityImg" src="" alt="">
-      <div class="activity-text">
-        <div class="activity-kind" id="activityKind">Playing</div>
-        <div class="activity-name" id="activityName">—</div>
-        <div class="activity-detail" id="activityDetail"></div>
-      </div>
     </div>
 
     <div class="error-banner" id="errorBanner"></div>
@@ -437,6 +584,31 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Z"/><path d="m22 6-10 7L2 6"/></svg>
       </a>
     </nav>
+
+    <!-- Activity / Spotify block, now BELOW the liquid-glass dock -->
+    <div class="activity" id="activityBlock">
+      <div class="activity-top">
+        <img id="activityImg" src="" alt="">
+        <div class="activity-text">
+          <div class="activity-kind">
+            <svg id="activityKindIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm4.6 14.5a.6.6 0 0 1-.83.2c-2.27-1.4-5.13-1.7-8.5-.94a.63.63 0 0 1-.28-1.22c3.7-.85 6.87-.48 9.4 1.1a.62.62 0 0 1 .2.86zm1.22-2.72a.75.75 0 0 1-1.03.25c-2.6-1.6-6.56-2.06-9.63-1.13a.75.75 0 1 1-.44-1.44c3.52-1.07 7.9-.55 10.87 1.28a.75.75 0 0 1 .23 1.04zm.1-2.83c-3.12-1.85-8.27-2.02-11.24-1.12a.9.9 0 1 1-.52-1.72c3.42-1.04 9.1-.84 12.68 1.28a.9.9 0 1 1-.92 1.56z"/></svg>
+            <span id="activityKind">Playing</span>
+          </div>
+          <div class="activity-name" id="activityName">—</div>
+          <div class="activity-detail" id="activityDetail"></div>
+        </div>
+      </div>
+
+      <div class="activity-progress" id="activityProgress">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-times">
+          <span id="progressElapsed">0:00</span>
+          <span id="progressTotal">0:00</span>
+        </div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -478,29 +650,83 @@
     const dot = el('statusDot');
     dot.style.background = color;
     dot.classList.toggle('pulse', status === 'online');
-    el('statusDotInline').style.background = color;
+    const dotInline = el('statusDotInline');
+    dotInline.style.background = color;
+    dotInline.classList.toggle('pulse', status === 'online');
     el('statusText').textContent = STATUS_LABELS[status] || 'Offline';
+  }
+
+  function formatTime(ms) {
+    if (!Number.isFinite(ms) || ms < 0) ms = 0;
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // Live-updating playback tracker so the progress bar/elapsed time moves
+  // smoothly between the 10s Lanyard polls instead of jumping.
+  let progressTimer = null;
+  let currentTrack = { start: null, end: null };
+
+  function stopProgressTicker() {
+    if (progressTimer) {
+      clearInterval(progressTimer);
+      progressTimer = null;
+    }
+    el('activityProgress').classList.remove('show');
+  }
+
+  function tickProgress() {
+    const { start, end } = currentTrack;
+    if (!start || !end) return;
+    const now = Date.now();
+    const total = end - start;
+    const elapsed = Math.min(Math.max(now - start, 0), total);
+    const pct = total > 0 ? (elapsed / total) * 100 : 0;
+    el('progressFill').style.width = pct + '%';
+    el('progressElapsed').textContent = formatTime(elapsed);
+    el('progressTotal').textContent = formatTime(total);
+  }
+
+  function startProgressTicker(startMs, endMs) {
+    currentTrack = { start: startMs, end: endMs };
+    el('activityProgress').classList.add('show');
+    tickProgress();
+    if (progressTimer) clearInterval(progressTimer);
+    progressTimer = setInterval(tickProgress, 1000);
   }
 
   function applyActivity(activities, spotify) {
     const block = el('activityBlock');
+    const kindIcon = el('activityKindIcon');
 
     if (spotify) {
       block.classList.add('show');
+      kindIcon.style.display = 'block';
       el('activityKind').textContent = 'Listening to Spotify';
       el('activityName').textContent = spotify.song || 'Unknown track';
       el('activityDetail').textContent = spotify.artist || '';
       el('activityImg').src = spotify.album_art_url || '';
+
+      const ts = spotify.timestamps;
+      if (ts && ts.start && ts.end) {
+        startProgressTicker(ts.start, ts.end);
+      } else {
+        stopProgressTicker();
+      }
       return;
     }
 
     const act = (activities || []).find(a => a.type !== 4) || (activities || [])[0];
     if (!act) {
       block.classList.remove('show');
+      stopProgressTicker();
       return;
     }
 
     block.classList.add('show');
+    kindIcon.style.display = 'none';
     el('activityKind').textContent = ACTIVITY_TYPE_LABELS[act.type] || 'Activity';
     el('activityName').textContent = act.name || '—';
     el('activityDetail').textContent = act.details || act.state || '';
@@ -515,6 +741,27 @@
       el('activityImg').src = img;
     } else {
       el('activityImg').src = '';
+    }
+
+    // Some Rich Presence activities (games, etc.) report elapsed-only timestamps.
+    if (act.timestamps && act.timestamps.start && act.timestamps.end) {
+      startProgressTicker(act.timestamps.start, act.timestamps.end);
+    } else if (act.timestamps && act.timestamps.start) {
+      // Elapsed-only: show a running clock with no fixed end.
+      el('activityProgress').classList.add('show');
+      const startMs = act.timestamps.start;
+      const render = () => {
+        const elapsed = Date.now() - startMs;
+        el('progressFill').style.width = '100%';
+        el('progressElapsed').textContent = formatTime(elapsed);
+        el('progressTotal').textContent = '';
+      };
+      render();
+      if (progressTimer) clearInterval(progressTimer);
+      progressTimer = setInterval(render, 1000);
+      currentTrack = { start: null, end: null };
+    } else {
+      stopProgressTicker();
     }
   }
 
