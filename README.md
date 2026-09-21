@@ -80,7 +80,9 @@ discord-status-web/
 │   ├── avatar.js       # Vercel function: serves your current Discord avatar as a PNG
 │   ├── discord.js      # Vercel function: receives the /tag slash command from Discord
 │   └── setup-commands.js  # one-time page that registers /tag with Discord
-├── YOUR_VIDEO_FILE.mp4 # the background video
+├── background-videos/  # drop your background videos here (any number of files)
+│   └── YOUR_VIDEO_FILE.mp4
+├── vercel.json         # bundles background-videos into the /api/videos function
 └── README.md
 ```
 
