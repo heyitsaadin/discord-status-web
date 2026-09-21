@@ -1061,7 +1061,15 @@
           ? payload.distinct_size
           : (typeof payload.size === 'number' ? payload.size : (commits ? commits.length : 0));
         const lastMsg = commits && commits.length > 0 ? commits[commits.length - 1].message.split('\n')[0] : '';
-        return { kind, name: repo, detail: lastMsg || `${n} commit${n === 1 ? '' : 's'}` };
+        // payload.ref looks like "refs/heads/main" -- strip it down to the branch name
+        const branch = payload.ref ? payload.ref.replace(/^refs\/heads\//, '') : '';
+        const countText = n > 0 ? `${n} commit${n === 1 ? '' : 's'}` : '';
+        // "where it pushed": repo name is the card title, branch goes in the detail line
+        const parts = [];
+        if (branch) parts.push(`on ${branch}`);
+        if (lastMsg) parts.push(lastMsg);
+        else if (countText) parts.push(countText);
+        return { kind, name: repo, detail: parts.join(' · ') };
       }
       case 'PullRequestEvent': {
         const action = evt.payload && evt.payload.action;
