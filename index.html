@@ -1630,12 +1630,22 @@
   // Mute toggles in place and keeps the card open so the label change is visible.
   menuMute.addEventListener('click', toggleMute);
 
-  // Manual skip reuses the same crossfade as the automatic transition. With fewer
-  // than two clips there is nothing to skip to, so the item just closes the menu.
+  // Manual skip reuses the same crossfade as the automatic transition.
   menuNext.addEventListener('click', () => {
     crossfadeToNext();
     setMenuOpen(false);
   });
+
+  // "Next video" only makes sense with two or more clips. The playlist loads
+  // asynchronously, so check it when the menu opens rather than at page load,
+  // and hide the item (and drop it from keyboard focus) when there's nothing to skip to.
+  function syncNextItem() {
+    const canSkip = playlist.length > 1;
+    menuNext.style.display = canSkip ? '' : 'none';
+    const i = menuItems.indexOf(menuNext);
+    if (!canSkip && i !== -1) menuItems.splice(i, 1);
+    else if (canSkip && i === -1) menuItems.splice(1, 0, menuNext);
+  }
 
   // Links open in a new tab; close the card so it isn't left open behind them.
   menuItems.forEach((item) => {
