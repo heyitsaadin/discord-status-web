@@ -669,6 +669,15 @@
   let progressTimer = null;
   let currentTrack = { start: null, end: null };
 
+  // Discord's gateway can momentarily omit the Spotify/activities payload on a
+  // status transition (e.g. Online -> Idle) even though the song is still
+  // playing -- Lanyard just mirrors whatever Discord last sent it. Rather than
+  // hide the whole card the instant that happens, remember the last-known
+  // Spotify/activity data and keep showing it through a short grace window so
+  // a blip doesn't make the card flicker away.
+  let lastKnownActivityAt = 0;
+  const ACTIVITY_GRACE_MS = 25000; // a bit over 2 missed 10s polls
+
   function stopProgressTicker() {
     if (progressTimer) {
       clearInterval(progressTimer);
