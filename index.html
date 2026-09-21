@@ -1155,7 +1155,12 @@
   }
 
   fetchGithubActivity();
-  setInterval(fetchGithubActivity, 10000); // check every 10s so a new event is picked up quickly; well under GitHub's 60 req/hr unauthenticated limit
+  // NOTE: GitHub's unauthenticated API allows 60 requests/hour per IP. Polling every
+  // 20s is 180/hr, so we only poll while the tab is visible and back off if rate limited.
+  setInterval(() => {
+    if (document.hidden) return;
+    fetchGithubActivity();
+  }, 20000);
 </script>
 
 </body>
