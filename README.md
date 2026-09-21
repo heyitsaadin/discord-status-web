@@ -95,7 +95,7 @@ discord-status-web/
    const DISCORD_USER_ID = "YOUR_DISCORD_ID";   // Discord → Settings → Advanced → Developer Mode, then right-click yourself → Copy User ID
    const GITHUB_USERNAME = 'your-github-name';
    ```
-4. **Swap the video.** Replace `YOUR_VIDEO_FILE.mp4`, or point the `<source>` tag at your own file.
+4. **Add your videos.** Put any number of `.mp4` / `.webm` / `.mov` files in the `background-videos/` folder. The page lists them automatically and plays them one after another, looping back to the first. No code changes needed.
 5. **Update the link-preview tags.** In the `<head>` of `index.html`, change the `og:` / `twitter:` URLs to your own deployed domain, and set `DISCORD_USER_ID` again in `api/avatar.js`.
 6. **Deploy.** Import the repo into [Vercel](https://vercel.com). There is no build command and no environment variables — it just works.
 
