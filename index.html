@@ -337,6 +337,12 @@
   .mute-btn:active { transform: scale(0.94); }
   .mute-btn svg { width: 20px; height: 20px; }
 
+  /* ---- Play / pause toggle: sits directly to the left of the mute button ----
+     Same look as .mute-btn. right = 20px (mute's offset) + 44px (mute's width) + 10px gap. */
+  .play-btn {
+    right: 74px;
+  }
+
   /* ---- Top-right "more" menu: a liquid-glass circle that MORPHS into a card ----
      It is ONE element. Collapsed, it is a 42px circle (identical glass recipe to
      .liquid-btn). Expanded, the same element grows to the card size while its radius
