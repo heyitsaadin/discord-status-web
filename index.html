@@ -1442,26 +1442,6 @@
     gap: 6px;
   }
 
-  /* A small live dot so it reads as "happening now", like the online pulse. */
-  .acode-live {
-    position: relative;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--online);
-    flex-shrink: 0;
-  }
-
-  .acode-live::before {
-    content: "";
-    position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    background: inherit;
-    opacity: 0.5;
-    animation: pulse 2s ease-out infinite;
-  }
-
   .acode-file {
     font-size: 14.5px;
     font-weight: 650;
