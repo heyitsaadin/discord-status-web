@@ -2237,7 +2237,7 @@
     creditsClose.tabIndex = open ? 0 : -1;
     creditsLinks.forEach((a) => { a.tabIndex = open ? 0 : -1; });
     // The scrim closes whichever card is open, so it must stay up for credits too.
-    moreScrim.classList.toggle('show', open || menuOpen);
+    syncScrim();
     if (open) {
       el('creditsScroll').scrollTop = 0;
       setTimeout(() => { if (creditsOpen) creditsClose.focus({ preventScroll: true }); }, 200);
