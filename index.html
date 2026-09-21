@@ -1555,7 +1555,8 @@
     try { first.volume = muted ? 0 : TARGET_VOLUME; } catch (err) {}
   }
 
-  muteBtn.addEventListener('click', () => {
+  // One shared toggle so the floating button and the menu item behave identically.
+  function toggleMute() {
     muted = !muted;
     applyMuted();
     if (!muted) {
@@ -1567,9 +1568,79 @@
       }
       safePlay(active());
     }
-  });
+  }
+
+  muteBtn.addEventListener('click', toggleMute);
 
   initVideos();
+
+  // ---- Three-dots menu: expands out of the button into a glass card ----
+  const moreMenu = el('moreMenu');
+  const moreTrigger = el('moreTrigger');
+  const moreScrim = el('moreScrim');
+  const moreContent = el('moreContent');
+  const menuMute = el('menuMute');
+  const menuNext = el('menuNext');
+  const menuItems = Array.from(moreContent.querySelectorAll('.more-item'));
+
+  // Mute item mirrors the current sound state (icon + label).
+  function syncMenuMute() {
+    el('menuMuteIcon').innerHTML = muted ? ICON_MUTED : ICON_UNMUTED;
+    el('menuMuteLabel').textContent = muted ? 'Unmute sound' : 'Mute sound';
+  }
+  syncMenuMute();
+
+  let menuOpen = false;
+
+  function setMenuOpen(open) {
+    if (open === menuOpen) return;
+    menuOpen = open;
+    moreMenu.classList.toggle('open', open);
+    moreScrim.classList.toggle('show', open);
+    moreTrigger.setAttribute('aria-expanded', String(open));
+    moreTrigger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    moreContent.setAttribute('aria-hidden', String(!open));
+    // Only let the items take keyboard focus while the card is actually open.
+    menuItems.forEach((item) => { item.tabIndex = open ? 0 : -1; });
+    if (open) {
+      // Wait for the expansion to get going before moving focus, so the browser
+      // doesn't scroll or jump the still-tiny element.
+      setTimeout(() => { if (menuOpen && menuItems[0]) menuItems[0].focus({ preventScroll: true }); }, 200);
+    } else if (moreMenu.contains(document.activeElement)) {
+      moreTrigger.focus({ preventScroll: true });
+    }
+  }
+
+  moreTrigger.addEventListener('click', () => setMenuOpen(true));
+  moreScrim.addEventListener('click', () => setMenuOpen(false));
+
+  document.addEventListener('keydown', (ev) => {
+    if (!menuOpen) return;
+    if (ev.key === 'Escape') {
+      setMenuOpen(false);
+    } else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      const i = menuItems.indexOf(document.activeElement);
+      const step = ev.key === 'ArrowDown' ? 1 : -1;
+      const next = menuItems[(i + step + menuItems.length) % menuItems.length];
+      if (next) next.focus();
+    }
+  });
+
+  // Mute toggles in place and keeps the card open so the label change is visible.
+  menuMute.addEventListener('click', toggleMute);
+
+  // Manual skip reuses the same crossfade as the automatic transition. With fewer
+  // than two clips there is nothing to skip to, so the item just closes the menu.
+  menuNext.addEventListener('click', () => {
+    crossfadeToNext();
+    setMenuOpen(false);
+  });
+
+  // Links open in a new tab; close the card so it isn't left open behind them.
+  menuItems.forEach((item) => {
+    if (item.tagName === 'A') item.addEventListener('click', () => setMenuOpen(false));
+  });
   fetchPresence();
   setInterval(fetchPresence, 10000);
 
