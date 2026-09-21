@@ -770,6 +770,180 @@
     color: var(--text-dim);
   }
 
+  /* ---- About card extras ----
+     The About card reuses the Credits card's glass sheet, scroller, header, note and
+     label styles (the .credits-* classes are the shared sheet). Only the parts unique
+     to About are styled here. */
+  .info-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .info-avatar {
+    display: block;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #141418;
+    border: 2px solid rgba(255,255,255,0.22);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .info-avatar[hidden] { display: none; }
+
+  .info-id {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .info-name {
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+  }
+
+  .info-handle {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease;
+  }
+
+  .info-handle:hover { color: var(--text); }
+
+  .info-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  .info-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--text);
+    text-decoration: none;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.35);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .info-tag svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+  /* The "Open source" tag: a touch of the site's accent colour so it stands out. */
+  .info-tag-accent {
+    background: rgba(124,111,255,0.3);
+    border-color: rgba(170,160,255,0.6);
+  }
+
+  a.info-tag:hover { background: rgba(255,255,255,0.18); }
+  a.info-tag-accent:hover { background: rgba(124,111,255,0.42); }
+  a.info-tag:active { transform: scale(0.96); }
+
+  .info-steps {
+    list-style: none;
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin-bottom: 18px;
+  }
+
+  .info-steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 29px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+
+  .info-steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10.5px;
+    font-weight: 650;
+    color: var(--text);
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+
+  .info-steps li strong { color: var(--text); font-weight: 650; }
+
+  .info-actions {
+    display: flex;
+    gap: 8px;
+    margin: 2px 0 4px;
+  }
+
+  .info-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    text-decoration: none;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 60%),
+      rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.5),
+      0 6px 16px -8px rgba(0,0,0,0.5);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .info-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .info-btn:hover { background: rgba(255,255,255,0.16); }
+  .info-btn:active { transform: scale(0.97); }
+
+  /* An inline text button (looks like a link) used inside the footer sentence. */
+  .info-link {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* Tapping anywhere outside closes the menu. This invisible layer catches that tap. */
   .more-scrim {
     position: fixed;
