@@ -70,7 +70,21 @@
     pointer-events: none;
     background:
       radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 92%, rgba(0,0,0,0.8) 100%),
-      linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 78%, rgba(0,0,0,0.5) 100%);
+      linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.75) 100%);
+  }
+
+  /* Bottom crossfade: fades the video to solid background color from the bottom
+     edge up toward the middle of the screen, so the bottom of the page blends
+     smoothly into --bg instead of cutting off. */
+  .bottom-fade {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 55%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(5,5,5,0) 0%, rgba(5,5,5,0.55) 55%, var(--bg) 100%);
   }
 
   /* Comic-style motion streaks, radiating faintly from center */
