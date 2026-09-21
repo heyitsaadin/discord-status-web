@@ -1403,6 +1403,74 @@
     </div>
   </div>
 
+  <!-- About card: opens from the "About" menu item and grows from the same corner.
+       It reuses the credits card's glass sheet (.credits-* classes are the shared sheet).
+       EDIT THE TEXT BELOW to change the bio, tags and explanation. -->
+  <div class="credits-card info-card" id="infoCard" role="dialog" aria-modal="true" aria-labelledby="infoTitle" aria-hidden="true">
+    <div class="credits-scroll" id="infoScroll">
+      <div class="credits-head">
+        <div class="credits-title" id="infoTitle">About</div>
+        <button class="credits-close" id="infoClose" type="button" aria-label="Close about" tabindex="-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="info-profile">
+        <img class="info-avatar" id="infoAvatar" alt="" hidden>
+        <div class="info-id">
+          <div class="info-name">Wex888</div>
+          <a class="info-handle" href="https://github.com/heyitsaadin" target="_blank" rel="noopener noreferrer">@heyitsaadin on GitHub</a>
+        </div>
+      </div>
+
+      <p class="credits-note">
+        I'm a developer who builds things for the web, Android and AI: browser apps, editor plugins and assistants.
+        Some of what I've made includes AI agent tools for the Acode editor, a JARVIS-style assistant and an AI mod for Minecraft.
+        This page is one of my projects, a live view of what I'm up to on Discord and GitHub.
+      </p>
+
+      <div class="info-tags">
+        <a class="info-tag info-tag-accent" href="https://github.com/heyitsaadin/discord-status-web" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+          Open source
+        </a>
+        <span class="info-tag">Web</span>
+        <span class="info-tag">Android</span>
+        <span class="info-tag">AI tools</span>
+        <span class="info-tag">Plugins</span>
+      </div>
+
+      <div class="credits-label">How this page works</div>
+      <ol class="info-steps">
+        <li><strong>Live status.</strong> The page asks the public Lanyard API for my Discord presence every 10 seconds: online status, avatar, Spotify and games.</li>
+        <li><strong>Custom tag.</strong> The small tag under my name is set with a /tag command in Discord and stored in Lanyard, so it shows even when I'm offline.</li>
+        <li><strong>GitHub card.</strong> When I push code, a card shows the repo and branch for 30 seconds. It reads GitHub's public events, so private repos never appear.</li>
+        <li><strong>Background.</strong> Every video in the background-videos folder is listed by a small function and played one after another with a crossfade.</li>
+        <li><strong>Hosting.</strong> It's one static page on Vercel plus a few small functions. There's no build step.</li>
+      </ol>
+
+      <div class="credits-label">Open source</div>
+      <p class="credits-note">
+        The code for this whole site is public. Read it, fork it, or borrow the parts you like. Setup steps are in the README.
+      </p>
+      <div class="info-actions">
+        <a class="info-btn" href="https://github.com/heyitsaadin/discord-status-web" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          View source
+        </a>
+        <a class="info-btn" href="https://github.com/heyitsaadin/discord-status-web/fork" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+          Fork it
+        </a>
+      </div>
+
+      <p class="credits-foot">
+        The code is open source. The background videos are not part of that: they belong to their creators.
+        <button class="info-link" id="infoCreditsLink" type="button">See credits</button>
+      </p>
+    </div>
+  </div>
+
   <div class="more-scrim" id="moreScrim"></div>
   <div class="more-menu" id="moreMenu">
     <button class="more-trigger" id="moreTrigger" type="button" aria-label="Open menu" aria-haspopup="true" aria-expanded="false" aria-controls="moreContent">
