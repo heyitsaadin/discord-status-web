@@ -1099,19 +1099,27 @@
   }
 
   // The card behaves like a transient notification: it shows the single most
-  // recent public GitHub event, then hides itself GITHUB_DISPLAY_MS after
-  // that event first appeared. If a newer event shows up (e.g. a commit,
-  // then later a push becomes the latest event) the id changes, the display
-  // timer resets, and the card shows the new latest event instead.
-  const GITHUB_DISPLAY_MS = 30000; // stays visible for 30s per event
+  // recent public GitHub event only while that event is younger than
+  // GITHUB_DISPLAY_MS, measured from the event's real created_at timestamp
+  // (NOT from when the page loaded). Older events are never shown, so opening
+  // the page long after a push shows nothing.
+  const GITHUB_DISPLAY_MS = 30000; // visible for 30s after the push happened
   let currentGithubEventId = null;
-  let githubShownAt = 0;
   let githubHideTimer = null;
+  let githubBackoffUntil = 0; // epoch ms; while Date.now() < this, skip GitHub requests
 
   async function fetchGithubActivity() {
     const block = el('githubActivityBlock');
+    if (Date.now() < githubBackoffUntil) return; // rate limited, wait for reset
     try {
       const res = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/events/public?per_page=1`);
+      if (res.status === 403 || res.status === 429) {
+        // Rate limited. x-ratelimit-reset is a unix timestamp (seconds) for when
+        // the limit resets; fall back to 5 minutes if the header is missing.
+        const reset = parseInt(res.headers.get('x-ratelimit-reset'), 10);
+        githubBackoffUntil = Number.isFinite(reset) ? reset * 1000 : Date.now() + 5 * 60000;
+        return;
+      }
       if (!res.ok) return;
       const events = await res.json();
       if (!Array.isArray(events) || events.length === 0) return;
