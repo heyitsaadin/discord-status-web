@@ -953,6 +953,112 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* ---- Platform icon shown before the @handle (Credits + Videos list) ---- */
+  .credits-item svg.plat,
+  .vid-head svg.plat {
+    width: 16px;
+    height: 16px;
+    opacity: 1;
+  }
+
+  .plat-instagram { color: #ff6fa5; }
+
+  /* ---- Background videos card: the list is an accordion, one video open at a time ---- */
+  .vid-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .vid-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 14px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-align: left;
+    cursor: pointer;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .vid-head:hover { background: rgba(255,255,255,0.12); }
+  .vid-head:active { background: rgba(255,255,255,0.18); transform: scale(0.98); }
+  .vid-row.open .vid-head { background: rgba(255,255,255,0.14); }
+
+  .vid-head svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
+
+  .vid-head .vid-num {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .vid-head svg.vid-chev {
+    opacity: 0.8;
+    transition: transform 0.3s ease;
+  }
+
+  .vid-row.open .vid-head svg.vid-chev { transform: rotate(180deg); }
+
+  /* Height animates from 0 to content size via grid rows, so no fixed heights are needed. */
+  .vid-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s ease;
+  }
+
+  .vid-row.open .vid-body { grid-template-rows: 1fr; }
+
+  .vid-stage {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .vid-player {
+    display: block;
+    width: 100%;
+    max-height: 46vh;
+    margin: 6px 0 4px;
+    border-radius: 16px;
+    background: #000;
+    object-fit: contain;
+    box-shadow: 0 8px 22px -10px rgba(0,0,0,0.7);
+  }
+
+  .vid-open-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 2px 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-decoration: none;
+  }
+
+  .vid-open-link:hover { color: var(--text); }
+  .vid-open-link svg { width: 12px; height: 12px; }
+
   /* Tapping anywhere outside closes the menu. This invisible layer catches that tap. */
   .more-scrim {
     position: fixed;
