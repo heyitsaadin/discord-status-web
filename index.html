@@ -1202,6 +1202,32 @@
   </button>
 
   <!-- Top-right three-dots menu. One glass element that morphs from a circle into a card. -->
+  <!-- Credits card: opens from the Credits item in the menu, growing from the same corner. -->
+  <div class="credits-card" id="creditsCard" role="dialog" aria-modal="true" aria-labelledby="creditsTitle" aria-hidden="true">
+    <div class="credits-scroll" id="creditsScroll">
+      <div class="credits-head">
+        <div class="credits-title" id="creditsTitle">Credits</div>
+        <button class="credits-close" id="creditsClose" type="button" aria-label="Close credits" tabindex="-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <p class="credits-note">
+        The background videos on this page <strong>are not mine</strong>. I don't own, host for download, or distribute them.
+        I simply picked them as a background because I like them. Each one belongs to its original creator, and their
+        names are listed below. If you're one of them, thank you, and your work is yours.
+      </p>
+
+      <div class="credits-label">Original creators</div>
+      <ul class="credits-list" id="creditsList"></ul>
+
+      <p class="credits-foot">
+        The videos were saved from Instagram, and the creator names come straight from the original posts.
+        Tap a name to see the original. If you want a video removed, contact me and I'll take it down.
+      </p>
+    </div>
+  </div>
+
   <div class="more-scrim" id="moreScrim"></div>
   <div class="more-menu" id="moreMenu">
     <button class="more-trigger" id="moreTrigger" type="button" aria-label="Open menu" aria-haspopup="true" aria-expanded="false" aria-controls="moreContent">
