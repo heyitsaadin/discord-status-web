@@ -2120,6 +2120,7 @@
 
     incoming.currentTime = 0;
     await safePlay(incoming);
+    if (bgPausedByList) incoming.pause();   // the video list opened while we were loading
     await runFade(incoming, outgoing, FADE_MS);
 
     // Fade done: park the old player and swap roles.
