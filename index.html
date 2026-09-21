@@ -1920,6 +1920,97 @@
   menuItems.forEach((item) => {
     if (item.tagName === 'A') item.addEventListener('click', () => setMenuOpen(false));
   });
+
+  // ---- Credits ----
+  // EDIT THIS LIST to add, remove or fix credits. `post` is the Instagram shortcode
+  // that yt-dlp put in each filename ("Video by <handle> [<shortcode>].mp4"). When it
+  // is set, the row links to that exact post; when it is null, the row links to the
+  // creator's profile instead.
+  const CREDITS = [
+    { handle: '_capocat',            post: 'DarjCt9Sqjf' },
+    { handle: 'advait.f1',           post: 'DYBvGfzoRPv' },
+    { handle: 'animatography',       post: 'DW9JvPyjD3w' },
+    { handle: 'ggnfx_',              post: 'DcRUczjyJW0' },
+    { handle: 'kryton.1',            post: 'DZscnUby5dY' },
+    { handle: 'leaf.vc',             post: 'DaGH9_WMCQ5' },
+    { handle: 'ninja.arcx',          post: 'DWWYlCojzgf' },
+    { handle: 'padilhaeditor',       post: 'DYxIMg_slqg' },
+    // The filename was cut off in the screenshot, so the full shortcode isn't known
+    // yet (it starts "DdEqBteCVJ"). Profile link until it's filled in.
+    { handle: 'runwiththegoldenwolf', post: null },
+    { handle: 'tdawgisded',          post: 'DT3cIK8jGIL' },
+    { handle: 'yu1.apel',            post: 'DSOS5dTkiB9' }
+  ];
+
+  const ICON_EXTERNAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+
+  const creditsCard = el('creditsCard');
+  const creditsList = el('creditsList');
+  const creditsClose = el('creditsClose');
+
+  // Build the rows with DOM methods (not innerHTML) so a handle can never inject markup.
+  CREDITS.forEach((c) => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = 'credits-item';
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.href = c.post
+      ? 'https://www.instagram.com/p/' + encodeURIComponent(c.post) + '/'
+      : 'https://www.instagram.com/' + encodeURIComponent(c.handle) + '/';
+    a.tabIndex = -1;
+
+    const handle = document.createElement('span');
+    handle.className = 'credits-handle';
+    handle.textContent = '@' + c.handle;
+
+    const kind = document.createElement('span');
+    kind.className = 'credits-kind';
+    kind.textContent = c.post ? 'View post' : 'Profile';
+
+    a.appendChild(handle);
+    a.appendChild(kind);
+    a.insertAdjacentHTML('beforeend', ICON_EXTERNAL);
+    li.appendChild(a);
+    creditsList.appendChild(li);
+  });
+
+  const creditsLinks = Array.from(creditsList.querySelectorAll('a'));
+  let creditsOpen = false;
+
+  function setCreditsOpen(open) {
+    if (open === creditsOpen) return;
+    creditsOpen = open;
+    creditsCard.classList.toggle('open', open);
+    creditsCard.setAttribute('aria-hidden', String(!open));
+    // Only let the card's controls take keyboard focus while it is open.
+    creditsClose.tabIndex = open ? 0 : -1;
+    creditsLinks.forEach((a) => { a.tabIndex = open ? 0 : -1; });
+    // The scrim closes whichever card is open, so it must stay up for credits too.
+    moreScrim.classList.toggle('show', open || menuOpen);
+    if (open) {
+      el('creditsScroll').scrollTop = 0;
+      setTimeout(() => { if (creditsOpen) creditsClose.focus({ preventScroll: true }); }, 200);
+    } else if (creditsCard.contains(document.activeElement)) {
+      moreTrigger.focus({ preventScroll: true });
+    }
+  }
+
+  // Credits replaces the menu: close the small card and grow the credits card out of
+  // the same corner, so it reads as the button expanding further, not a new popup.
+  el('menuCredits').addEventListener('click', () => {
+    setMenuOpen(false);
+    setCreditsOpen(true);
+  });
+
+  creditsClose.addEventListener('click', () => setCreditsOpen(false));
+
+  // The scrim already closed the menu; extend it to close credits as well.
+  moreScrim.addEventListener('click', () => setCreditsOpen(false));
+
+  document.addEventListener('keydown', (ev) => {
+    if (creditsOpen && ev.key === 'Escape') setCreditsOpen(false);
+  });
   fetchPresence();
   setInterval(fetchPresence, 10000);
 
