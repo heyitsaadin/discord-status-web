@@ -2176,7 +2176,7 @@
   // clip ends (i.e. begins FADE_MS before the end). Also handles very short clips.
   function watchActive() {
     const p = active();
-    if (crossfading || !p.duration || !isFinite(p.duration)) return;
+    if (crossfading || userPaused || !p.duration || !isFinite(p.duration)) return;
     const remaining = p.duration - p.currentTime;
     if (remaining <= FADE_MS / 1000 + 0.1) crossfadeToNext();
   }
