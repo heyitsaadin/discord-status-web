@@ -1118,28 +1118,37 @@
 
       const evt = events[0];
 
+      // How old is this event, measured from when it ACTUALLY happened on GitHub
+      // (not from when this page loaded). This is what makes the card go away.
+      const ageMs = Date.now() - new Date(evt.created_at).getTime();
+      const remainingMs = GITHUB_DISPLAY_MS - ageMs;
+
+      // Too old (or clock skew made it nonsense): make sure the card is hidden.
+      if (remainingMs <= 0) {
+        if (githubHideTimer) { clearTimeout(githubHideTimer); githubHideTimer = null; }
+        block.classList.remove('show');
+        return;
+      }
+
+      // Fresh push. Render it (only re-render when it's a new event to avoid flicker).
       if (evt.id !== currentGithubEventId) {
-        // A genuinely new latest event -- render it and restart the 30s clock.
         currentGithubEventId = evt.id;
-        githubShownAt = Date.now();
 
         const { kind, name, detail } = describeGithubEvent(evt);
         el('githubActivityKind').textContent = kind;
         el('githubActivityName').textContent = name;
         el('githubActivityDetail').textContent = detail;
-        el('githubActivityTime').textContent = timeAgo(evt.created_at);
         block.href = `https://github.com/${evt.repo && evt.repo.name ? evt.repo.name : GITHUB_USERNAME}`;
-        block.classList.add('show');
-
-        if (githubHideTimer) clearTimeout(githubHideTimer);
-        githubHideTimer = setTimeout(() => {
-          block.classList.remove('show');
-        }, GITHUB_DISPLAY_MS);
-      } else if (block.classList.contains('show')) {
-        // Same event as before -- just keep the "Xm ago" timestamp fresh
-        // while the card is still on screen.
-        el('githubActivityTime').textContent = timeAgo(evt.created_at);
       }
+
+      el('githubActivityTime').textContent = timeAgo(evt.created_at);
+      block.classList.add('show');
+
+      // Hide exactly when the event turns 30s old, based on its real timestamp.
+      if (githubHideTimer) clearTimeout(githubHideTimer);
+      githubHideTimer = setTimeout(() => {
+        block.classList.remove('show');
+      }, remainingMs);
     } catch (e) {
       // Fail quietly -- this block is a bonus, not core to the page.
     }
