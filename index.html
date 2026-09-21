@@ -542,6 +542,234 @@
     background: rgba(255,255,255,0.16);
   }
 
+  /* ---- Credits card: same glass + same corner-anchored morph as the menu ----
+     It grows from the same top-right spot, but is wider and scrolls, because it
+     carries a disclaimer and a list of creators. */
+  .credits-card {
+    --menu-ease-out: cubic-bezier(0.32, 1.28, 0.42, 1);
+    --menu-ease-in: cubic-bezier(0.4, 0, 0.2, 1);
+    --credits-w: min(340px, calc(100vw - 40px));
+    --credits-h: min(520px, calc(100vh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+    position: fixed;
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    right: 20px;
+    z-index: 6;
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--text);
+    transform-origin: top right;
+    /* Collapsed, it is invisible and can't be tapped. It only exists to be grown. */
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+
+    background:
+      radial-gradient(circle at 25% 15%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0) 55%),
+      rgba(255,255,255,0.07);
+    backdrop-filter: blur(22px) saturate(1.6);
+    -webkit-backdrop-filter: blur(22px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 10px 24px -8px rgba(0,0,0,0.5),
+      0 2px 6px rgba(0,0,0,0.28);
+
+    transition:
+      width 0.5s var(--menu-ease-in),
+      height 0.5s var(--menu-ease-in),
+      border-radius 0.5s var(--menu-ease-in),
+      opacity 0.2s ease 0.1s,
+      visibility 0s linear 0.5s;
+  }
+
+  .credits-card.open {
+    width: var(--credits-w);
+    height: var(--credits-h);
+    border-radius: 28px;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.6),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 24px 48px -12px rgba(0,0,0,0.65),
+      0 4px 12px rgba(0,0,0,0.35);
+    transition:
+      width 0.55s var(--menu-ease-out),
+      height 0.55s var(--menu-ease-out),
+      border-radius 0.55s var(--menu-ease-out),
+      opacity 0.12s ease,
+      visibility 0s;
+  }
+
+  .credits-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.15) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .credits-card::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 200deg, rgba(255,255,255,0.04), rgba(255,255,255,0.5) 15%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.04) 65%, rgba(255,255,255,0.35) 85%, rgba(255,255,255,0.04));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: 0;
+  }
+
+  /* The scroller sits inside the clipped card. Fixed width (matching the open card)
+     so text doesn't re-wrap while the card is still growing. */
+  .credits-scroll {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--credits-w);
+    height: var(--credits-h);
+    z-index: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 18px 22px;
+    opacity: 0;
+    transform: scale(0.94);
+    transform-origin: top right;
+    transition: opacity 0.15s ease, transform 0.35s var(--menu-ease-in);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+  }
+
+  .credits-card.open .credits-scroll {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.3s ease 0.14s, transform 0.5s var(--menu-ease-out) 0.05s;
+  }
+
+  .credits-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .credits-title {
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+  }
+
+  .credits-close {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .credits-close:hover { background: rgba(255,255,255,0.18); }
+  .credits-close:active { transform: scale(0.92); }
+  .credits-close svg { width: 14px; height: 14px; }
+
+  .credits-note {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+
+  .credits-note strong { color: var(--text); font-weight: 650; }
+
+  .credits-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .credits-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .credits-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 14px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .credits-item:hover { background: rgba(255,255,255,0.12); }
+  .credits-item:active { background: rgba(255,255,255,0.18); transform: scale(0.98); }
+
+  .credits-item .credits-handle {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .credits-item .credits-kind {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .credits-item svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    opacity: 0.85;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
+
+  .credits-foot {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.16);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+
   /* Tapping anywhere outside closes the menu. This invisible layer catches that tap. */
   .more-scrim {
     position: fixed;
