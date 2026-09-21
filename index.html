@@ -1926,6 +1926,24 @@
       </div>
     </div>
 
+    <!-- Acode coding card: fed by the Acode plugin -> /api/acode -> Lanyard KV ("acode") -->
+    <div class="acode-card" id="acodeCard" aria-live="polite">
+      <div class="acode-top">
+        <div class="acode-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+        </div>
+        <div class="acode-text">
+          <div class="acode-kind"><span class="acode-live"></span><span>Coding in Acode</span></div>
+          <div class="acode-file" id="acodeFile">—</div>
+          <div class="acode-project" id="acodeProject"></div>
+        </div>
+      </div>
+      <div class="acode-meta">
+        <span class="acode-lang" id="acodeLang" hidden><i></i><span id="acodeLangText"></span></span>
+        <span class="acode-time" id="acodeTime"></span>
+      </div>
+    </div>
+
     <!-- GitHub activity block: pulls directly from the GitHub API, independent of Discord/Lanyard -->
     <a class="github-activity" id="githubActivityBlock" href="https://github.com/heyitsaadin" target="_blank" rel="noopener noreferrer">
       <div class="github-activity-icon">
