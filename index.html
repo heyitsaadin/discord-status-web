@@ -2756,7 +2756,20 @@
 
   playBtn.addEventListener('click', togglePlay);
 
-  initVideos();
+  // ---- Warning gate ----
+  // The background video (with sound) only starts once the user taps Continue.
+  // That tap is a real user gesture, so the browser will allow audio right away
+  // instead of falling back to muted-then-unmute.
+  const warningGate = el('warningGate');
+  const warningContinue = el('warningContinue');
+
+  function dismissWarningGate() {
+    warningGate.classList.add('hide');
+    warningGate.setAttribute('aria-hidden', 'true');
+    initVideos();
+  }
+
+  warningContinue.addEventListener('click', dismissWarningGate, { once: true });
 
   // ---- Three-dots menu: expands out of the button into a glass card ----
   const moreMenu = el('moreMenu');
