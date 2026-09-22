@@ -1813,6 +1813,25 @@
 </head>
 <body>
 
+  <!-- Flash / autoplay warning gate: shown on load, blocks the page until dismissed.
+       Tapping Continue is the real user gesture that lets the video + audio start. -->
+  <div class="warning-gate" id="warningGate" role="dialog" aria-modal="true" aria-labelledby="warningTitle">
+    <div class="warning-card">
+      <div class="warning-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"></path></svg>
+      </div>
+      <div class="warning-title" id="warningTitle">Flashing content &amp; sound</div>
+      <p class="warning-text">
+        This page plays a looping <strong>background video with sound</strong>, and some clips
+        may contain <strong>quick flashes or fast motion</strong>. Tap Continue when you're ready.
+      </p>
+      <button class="warning-continue" id="warningContinue" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+        Continue
+      </button>
+    </div>
+  </div>
+
   <!-- Background videos: two stacked players so the script can crossfade between clips
        (picture AND sound) instead of cutting. Sources are filled in from /background-videos.
        Neither has a `loop` attribute: the script advances and wraps the playlist itself. -->
