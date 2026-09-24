@@ -2405,9 +2405,6 @@
     const chevW = chev ? chev.offsetWidth : 12;
     const contentW = textRight + CHEV_GAP + chevW;
     pill.style.setProperty('--pill-closed-w', Math.ceil(dotEl.offsetLeft + contentW + PILL_PAD + 2) + 'px');
-    // Pin the chevron right after the label while collapsed (it only floats to the far
-    // right of the wide inner layer when open), so it never looks detached from the text.
-    if (chev) chev.style.marginLeft = CHEV_GAP + 'px';
 
     // Keep an open card's text in step with live changes (e.g. Online -> Coding).
     if (pillOpen) {
