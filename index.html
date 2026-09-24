@@ -3883,19 +3883,6 @@
     return a;
   }
 
-  async function loadMovies() {
-    const row = el('moviesRow');
-    const empty = el('moviesEmpty');
-    try {
-      const res = await fetch('/api/movies');
-      const json = await res.json();
-      if (!json.ok) { favRowError(empty, json.error || 'Could not load movies.'); return; }
-      renderFavRow(row, empty, json.movies, buildMovieCard);
-    } catch (e) {
-      favRowError(empty, 'Could not reach the movies list.');
-    }
-  }
-
   async function loadTopTracks() {
     const row = el('tracksRow');
     const empty = el('tracksEmpty');
