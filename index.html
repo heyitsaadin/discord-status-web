@@ -140,13 +140,16 @@
     --pill-ease-in: cubic-bezier(0.4, 0, 0.2, 1);         /* clean settle, closing */
     --pill-open-w: min(248px, calc(100vw - 40px));
     --pill-open-h: 96px;
-    --pill-closed-w: 120px;
+    /* Set from JS per status (see PILL_WIDTHS). 118px is a safe default so the pill can
+       never collapse to nothing, even before the script runs. */
+    --pill-closed-w: 118px;
     --pill-closed-h: 34px;
     position: fixed;
     top: calc(20px + env(safe-area-inset-top, 0px));
     left: 20px;
     z-index: 5;
     width: var(--pill-closed-w);
+    min-width: 84px;
     height: var(--pill-closed-h);
     border-radius: 17px;
     overflow: hidden;
