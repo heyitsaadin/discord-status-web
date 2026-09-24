@@ -129,18 +129,31 @@
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* ---- Top-left "Online" status pill (liquid glass) ---- */
+  /* ---- Top-left status pill: a liquid-glass pill that MORPHS into a small card ----
+     Same recipe as the top-right .more-menu: ONE element, anchored at its corner
+     (top-left here), whose width / height / radius all animate together with the same
+     spring easing. The pill row (dot + label) stays put at the top; the explanation text
+     fades in below it as the card grows. Height is measured in JS so it fits the text. */
   .status-pill {
+    --pill-ease-out: cubic-bezier(0.32, 1.28, 0.42, 1);   /* soft overshoot, opening */
+    --pill-ease-in: cubic-bezier(0.4, 0, 0.2, 1);         /* clean settle, closing */
+    --pill-open-w: min(248px, calc(100vw - 40px));
+    --pill-open-h: 96px;
+    --pill-closed-w: 120px;
+    --pill-closed-h: 34px;
     position: fixed;
     top: calc(20px + env(safe-area-inset-top, 0px));
     left: 20px;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 9px 16px 9px 13px;
-    border-radius: 999px;
+    z-index: 5;
+    width: var(--pill-closed-w);
+    height: var(--pill-closed-h);
+    border-radius: 17px;
+    overflow: hidden;
     isolation: isolate;
+    cursor: pointer;
+    color: var(--text);
+    transform-origin: top left;
+    -webkit-tap-highlight-color: transparent;
 
     background:
       radial-gradient(circle at 25% 20%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0) 55%),
@@ -153,17 +166,122 @@
       inset 0 -6px 10px -6px rgba(0,0,0,0.35),
       0 10px 24px -8px rgba(0,0,0,0.5),
       0 2px 6px rgba(0,0,0,0.28);
+
+    transition:
+      width 0.5s var(--pill-ease-in),
+      height 0.5s var(--pill-ease-in),
+      border-radius 0.5s var(--pill-ease-in),
+      box-shadow 0.5s ease,
+      transform 0.15s ease;
   }
 
+  .status-pill:active:not(.open) { transform: scale(0.96); }
+
+  .status-pill.open {
+    width: var(--pill-open-w);
+    height: var(--pill-open-h);
+    border-radius: 24px;
+    cursor: default;
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.6),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 22px 44px -12px rgba(0,0,0,0.65),
+      0 4px 12px rgba(0,0,0,0.35);
+    transition:
+      width 0.55s var(--pill-ease-out),
+      height 0.55s var(--pill-ease-out),
+      border-radius 0.55s var(--pill-ease-out),
+      box-shadow 0.55s ease,
+      transform 0.15s ease;
+  }
+
+  /* Same highlight sheen and rim light as .more-menu. Radius is inherited so it morphs too. */
   .status-pill::before {
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 999px;
+    border-radius: inherit;
     background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.15) 100%);
     mix-blend-mode: overlay;
     pointer-events: none;
+    z-index: 0;
   }
+
+  .status-pill::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 200deg, rgba(255,255,255,0.05), rgba(255,255,255,0.65) 15%, rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.05) 65%, rgba(255,255,255,0.45) 85%, rgba(255,255,255,0.05));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: 0;
+  }
+
+  /* Fixed-width inner layer, so the text never re-wraps while the card is still growing.
+     The container's overflow: hidden simply reveals it. */
+  .status-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--pill-open-w);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px 14px 13px;
+  }
+
+  .status-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: calc(var(--pill-closed-h) - 2px);
+    flex-shrink: 0;
+  }
+
+  .status-detail {
+    padding-top: 2px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+    transform-origin: top left;
+    transition: opacity 0.15s ease, transform 0.35s var(--pill-ease-in);
+  }
+
+  .status-pill.open .status-detail {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.3s ease 0.12s, transform 0.5s var(--pill-ease-out) 0.05s;
+  }
+
+  .status-detail strong { color: var(--text); font-weight: 650; }
+
+  .status-detail .status-mail {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* A tiny chevron so people can tell the pill is tappable. Rotates when open. */
+  .status-chev {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: transform 0.4s var(--pill-ease-in), opacity 0.2s ease;
+  }
+
+  .status-pill.open .status-chev { transform: rotate(180deg); opacity: 0.9; }
 
   .status-pill .dot-inline {
     position: relative;
