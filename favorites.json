@@ -1,0 +1,19 @@
+{
+  "movies": [
+    {
+      "title": "The Pursuit of Happyness",
+      "year": "2006",
+      "note": "",
+      "link": "https://share.google/lm7SqzdAdcojjwIDe",
+      "image": ""
+    }
+  ],
+  "songs": [
+    {
+      "title": "Add your first song here",
+      "artist": "Artist name",
+      "link": "",
+      "image": ""
+    }
+  ]
+}
