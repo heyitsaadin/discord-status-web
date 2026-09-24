@@ -2282,16 +2282,145 @@
     banner.classList.add('show');
   }
 
-  function applyStatus(status) {
-    const color = STATUS_COLORS[status] || STATUS_COLORS.offline;
-    const dot = el('statusDot');
-    dot.style.background = color;
-    dot.classList.toggle('pulse', status === 'online');
-    const dotInline = el('statusDotInline');
-    dotInline.style.background = color;
-    dotInline.classList.toggle('pulse', status === 'online');
-    el('statusText').textContent = STATUS_LABELS[status] || 'Offline';
+  // ---- Status pill (top-left) ----
+  // The pill shows one of: Online / Idle / Do Not Disturb / Offline, or "Coding" while the
+  // Acode heartbeat is fresh (the same signal that shows the coding card at the bottom).
+  // Tapping it expands a card with a plain-language explanation, because not everyone
+  // knows what "Idle" or "DND" mean on Discord.
+  //
+  // EDIT THE WORDING HERE. `{mail}` becomes a tappable "mail" link.
+  const MAIL_ADDRESS = 'hey.itsaadin@gmail.com';
+  const STATUS_MESSAGES = {
+    online:  'I\'m <strong>around on Discord</strong> right now. Say hi, or drop a {mail} if you\'d rather.',
+    idle:    'He\'s <strong>just sleepy rn</strong> 😴 Not at the screen. Drop a {mail} and I\'ll get back to you.',
+    dnd:     'I\'m on <strong>Do Not Disturb</strong>, so I won\'t see Discord pings. Drop a {mail} instead.',
+    offline: 'He\'s <strong>touching grass rn</strong> 🌱 Come back later, or leave a {mail}.'
+  };
+
+  const CODING_COLOR = 'var(--coding)';
+  let currentStatus = 'offline';
+  let pillOpen = false;
+
+  // Builds the explanation for the current state. Uses DOM methods for anything that comes
+  // from the plugin (file / project), so a weird filename can never inject markup.
+  function renderStatusDetail() {
+    const box = el('statusDetail');
+    box.textContent = '';
+
+    const addMailLink = (parent) => {
+      const a = document.createElement('a');
+      a.className = 'status-mail';
+      a.href = 'mailto:' + MAIL_ADDRESS;
+      a.textContent = 'mail';
+      parent.appendChild(a);
+    };
+
+    if (currentStatus === 'coding' && acodeSession) {
+      const strong = (t) => { const s = document.createElement('strong'); s.textContent = t; return s; };
+      box.appendChild(document.createTextNode('I\'m '));
+      box.appendChild(strong('coding on Acode'));
+      box.appendChild(document.createTextNode(' right now on '));
+      box.appendChild(strong(acodeSession.file));
+      if (acodeSession.project) {
+        box.appendChild(document.createTextNode(' in '));
+        box.appendChild(strong(acodeSession.project));
+      }
+      box.appendChild(document.createTextNode('. Drop a '));
+      addMailLink(box);
+      box.appendChild(document.createTextNode(' and I\'ll reply after.'));
+      return;
+    }
+
+    // Fixed strings from STATUS_MESSAGES above (not user data), so innerHTML is safe here.
+    const template = STATUS_MESSAGES[currentStatus] || STATUS_MESSAGES.offline;
+    const parts = template.split('{mail}');
+    parts.forEach((chunk, i) => {
+      const span = document.createElement('span');
+      span.innerHTML = chunk;
+      box.appendChild(span);
+      if (i < parts.length - 1) addMailLink(box);
+    });
   }
+
+  // Grow the card to fit its text. Measured from the real content, so it works for any
+  // message length or screen width instead of relying on a magic number.
+  function sizePill() {
+    const pill = el('statusPill');
+    const head = pill.querySelector('.status-head');
+    const detail = el('statusDetail');
+    const inner = pill.querySelector('.status-inner');
+    // scrollHeight of the fixed-width inner layer = exactly what the open card needs.
+    const h = inner.scrollHeight;
+    if (h > 0) pill.style.setProperty('--pill-open-h', h + 'px');
+  }
+
+  function setPillOpen(open) {
+    if (open === pillOpen) return;
+    pillOpen = open;
+    const pill = el('statusPill');
+    if (open) {
+      renderStatusDetail();
+      sizePill();
+    }
+    pill.classList.toggle('open', open);
+    pill.setAttribute('aria-expanded', String(open));
+    el('statusDetail').setAttribute('aria-hidden', String(!open));
+    syncScrim();
+  }
+
+  function applyStatus(status) {
+    // While the coding heartbeat is fresh, "Coding" wins over the Discord status.
+    const isCoding = !!acodeSession;
+    const effective = isCoding ? 'coding' : (status in STATUS_LABELS ? status : 'offline');
+    currentStatus = effective;
+
+    // The big dot on the avatar always follows the real Discord status.
+    const discordColor = STATUS_COLORS[status] || STATUS_COLORS.offline;
+    const dot = el('statusDot');
+    dot.style.background = discordColor;
+    dot.classList.toggle('pulse', status === 'online');
+
+    // The pill follows the effective status (Coding, or the Discord one).
+    const pillColor = isCoding ? CODING_COLOR : discordColor;
+    const dotInline = el('statusDotInline');
+    dotInline.style.background = pillColor;
+    dotInline.classList.toggle('pulse', isCoding || status === 'online');
+    const label = isCoding ? 'Coding' : (STATUS_LABELS[status] || 'Offline');
+    el('statusText').textContent = label;
+
+    const pill = el('statusPill');
+    pill.setAttribute('aria-label', 'Status: ' + label + '. Tap to see what this means.');
+
+    // The pill's closed width follows its label ("Do Not Disturb" is wider than "Idle").
+    // Measured from the real text, so it never clips or leaves dead space.
+    const textW = el('statusText').offsetWidth;
+    pill.style.setProperty('--pill-closed-w', Math.ceil(13 + 9 + 9 + textW + 9 + 12 + 16) + 'px');
+
+    // Keep an open card's text in step with live changes (e.g. Online -> Coding).
+    if (pillOpen) {
+      renderStatusDetail();
+      sizePill();
+    }
+  }
+
+  // Tap / keyboard to open. Tapping outside (the scrim), pressing Escape, or tapping the
+  // open card again closes it.
+  (function initStatusPill() {
+    const pill = el('statusPill');
+    pill.addEventListener('click', (ev) => {
+      // Let the "mail" link work without also toggling the card.
+      if (ev.target.closest('a')) return;
+      setPillOpen(!pillOpen);
+    });
+    pill.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        setPillOpen(!pillOpen);
+      } else if (ev.key === 'Escape' && pillOpen) {
+        setPillOpen(false);
+      }
+    });
+  })();
 
   function formatTime(ms) {
     if (!Number.isFinite(ms) || ms < 0) ms = 0;
