@@ -2300,6 +2300,16 @@
     offline: 'He\'s <strong>touching grass rn</strong> 🌱 Come back later, or leave a {mail}.'
   };
 
+  // Collapsed pill width (px) per status: 13 left pad + 9 dot + 9 gap + label + 8 gap +
+  // 12 chevron + 13 right pad + 2 border. Labels are 12.5px / weight 600.
+  const PILL_WIDTHS = {
+    online:  100,   // "Online"
+    idle:     88,   // "Idle"
+    dnd:     136,   // "Do Not Disturb"
+    offline: 100,   // "Offline"
+    coding:  102    // "Coding"
+  };
+
   const CODING_COLOR = 'var(--coding)';
   let currentStatus = 'offline';
   let pillOpen = false;
