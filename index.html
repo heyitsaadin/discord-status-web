@@ -2144,6 +2144,15 @@
     </div>
   </div>
 
+  <!-- Favourites: Movies / Songs tabs over a scrollable list. Filled from /favorites.json. -->
+  <section class="favs" id="favs" aria-label="Favourites">
+    <div class="favs-tabs" role="tablist">
+      <button class="favs-tab active" id="tabMovies" type="button" role="tab" aria-selected="true" aria-controls="favsList" data-tab="movies">Movies</button>
+      <button class="favs-tab" id="tabSongs" type="button" role="tab" aria-selected="false" aria-controls="favsList" data-tab="songs">Songs</button>
+    </div>
+    <ul class="favs-list" id="favsList" role="tabpanel" aria-labelledby="tabMovies"></ul>
+  </section>
+
   <button class="mute-btn" id="muteBtn" aria-label="Mute background video">
     <svg id="muteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
