@@ -2614,9 +2614,15 @@
     return rem === 0 ? hrs + 'h' : hrs + 'h ' + rem + 'm';
   }
 
+  // Last Discord status, so the pill can be re-evaluated the instant coding starts/stops
+  // instead of waiting for the next 10s Lanyard poll.
+  let lastDiscordStatus = 'offline';
+
   function hideAcodeCard() {
     el('acodeCard').classList.remove('show');
     if (acodeTicker) { clearInterval(acodeTicker); acodeTicker = null; }
+    // acodeSession is already null by the time this runs, so the pill drops back to Discord's status.
+    applyStatus(lastDiscordStatus);
   }
 
   // Runs every second while the card is up: updates the timer and enforces the idle timeout.
