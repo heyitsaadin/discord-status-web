@@ -449,6 +449,89 @@
   /* inline-block (not flex) so text-overflow: ellipsis works on long tags */
   .tag-pill.show { display: inline-block; }
 
+  /* ---- "Don't disturb" plain-text notice + ping button ----
+     Shown whenever a custom tag is set on the status page. No card, no glass --
+     just text, matched to the same width as the Spotify/Acode cards below it,
+     with a small pill button beside it that pings #ping-me on Discord. */
+  .dnd-row {
+    position: relative;
+    z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    max-width: 360px;
+    min-width: 300px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .dnd-row.show { display: flex; }
+
+  .dnd-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+
+  .dnd-text strong { color: var(--text); font-weight: 650; }
+
+  .ping-btn {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 60%),
+      rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.5),
+      0 6px 16px -8px rgba(0,0,0,0.5);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+  }
+
+  .ping-btn:hover:not(:disabled) { background: rgba(255,255,255,0.16); }
+  .ping-btn:active:not(:disabled) { transform: scale(0.96); }
+  .ping-btn:disabled { opacity: 0.55; cursor: default; }
+
+  .ping-spinner {
+    display: none;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: var(--text);
+    animation: pingSpin 0.7s linear infinite;
+  }
+
+  .ping-btn.loading .ping-spinner { display: inline-block; }
+  .ping-btn.loading .ping-label { display: none; }
+
+  @keyframes pingSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ping-spinner { animation: none; }
+  }
+
   /* ---- Mute toggle ---- */
   .mute-btn {
     position: fixed;
