@@ -2307,8 +2307,11 @@
     idle:     88,   // "Idle"
     dnd:     136,   // "Do Not Disturb"
     offline: 100,   // "Offline"
-    coding:  102    // "Coding"
+    coding:  102,   // "Coding"
+    connecting: 122 // "connecting…" (shown until the first Lanyard response)
   };
+  // Apply the connecting width straight away so the pill is the right size on first paint.
+  el('statusPill').style.setProperty('--pill-closed-w', PILL_WIDTHS.connecting + 'px');
 
   const CODING_COLOR = 'var(--coding)';
   let currentStatus = 'offline';
