@@ -3707,6 +3707,135 @@
   fetchPresence();
   setInterval(fetchPresence, 10000);
 
+  // ---- Favourites (Movies / Songs) ----
+  // Data lives in /favorites.json in the repo, so adding a movie or song is just adding an
+  // entry to that file. Each entry: { title, year | artist, note, link, image }.
+  // Only title is required. `link` makes the row tappable; `image` is an optional poster /
+  // cover URL (if it's empty or fails to load, a letter tile is shown instead).
+  const favsList = el('favsList');
+  const favTabs = Array.from(document.querySelectorAll('.favs-tab'));
+  let favsData = { movies: [], songs: [] };
+  let favsTab = 'movies';
+  let favsLoaded = false;
+
+  const ICON_FAV_OPEN = '<svg class="favs-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+
+  // Only allow real web links, so a typo or odd value in the JSON can't become a
+  // javascript: link.
+  function safeUrl(u) {
+    if (typeof u !== 'string') return '';
+    const s = u.trim();
+    return /^https?:\/\//i.test(s) ? s : '';
+  }
+
+  function favRow(item, kind) {
+    const link = safeUrl(item.link);
+    const row = document.createElement('li');
+    const node = document.createElement(link ? 'a' : 'div');
+    node.className = 'favs-item';
+    if (link) {
+      node.href = link;
+      node.target = '_blank';
+      node.rel = 'noopener noreferrer';
+    }
+
+    const title = String(item.title || 'Untitled');
+    const sub = kind === 'movies'
+      ? [item.year, item.note].filter(Boolean).join(' · ')
+      : [item.artist, item.note].filter(Boolean).join(' · ');
+
+    // Poster / cover. Falls back to a letter tile if there is no image or it fails to load.
+    const imgUrl = safeUrl(item.image);
+    const makeTile = () => {
+      const t = document.createElement('div');
+      t.className = 'favs-art';
+      t.textContent = title.trim().charAt(0).toUpperCase();
+      return t;
+    };
+    if (imgUrl) {
+      const img = document.createElement('img');
+      img.className = 'favs-art';
+      img.alt = '';
+      img.loading = 'lazy';
+      img.referrerPolicy = 'no-referrer';
+      img.src = imgUrl;
+      img.addEventListener('error', () => img.replaceWith(makeTile()));
+      node.appendChild(img);
+    } else {
+      node.appendChild(makeTile());
+    }
+
+    const text = document.createElement('div');
+    text.className = 'favs-text';
+    const t = document.createElement('div');
+    t.className = 'favs-title';
+    t.textContent = title;
+    text.appendChild(t);
+    if (sub) {
+      const s = document.createElement('div');
+      s.className = 'favs-sub';
+      s.textContent = sub;
+      text.appendChild(s);
+    }
+    node.appendChild(text);
+    if (link) node.insertAdjacentHTML('beforeend', ICON_FAV_OPEN);
+
+    row.appendChild(node);
+    return row;
+  }
+
+  function renderFavs() {
+    favsList.textContent = '';
+    const items = Array.isArray(favsData[favsTab]) ? favsData[favsTab] : [];
+    if (!favsLoaded) {
+      const li = document.createElement('li');
+      li.className = 'favs-empty';
+      li.textContent = 'Loading…';
+      favsList.appendChild(li);
+    } else if (items.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'favs-empty';
+      li.textContent = favsTab === 'movies' ? 'No movies added yet.' : 'No songs added yet.';
+      favsList.appendChild(li);
+    } else {
+      items.forEach((item) => { if (item && item.title) favsList.appendChild(favRow(item, favsTab)); });
+    }
+    favsList.scrollTop = 0;
+  }
+
+  function setFavsTab(tab) {
+    favsTab = tab;
+    favTabs.forEach((b) => {
+      const on = b.dataset.tab === tab;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    favsList.setAttribute('aria-labelledby', tab === 'movies' ? 'tabMovies' : 'tabSongs');
+    renderFavs();
+  }
+
+  favTabs.forEach((b) => b.addEventListener('click', () => setFavsTab(b.dataset.tab)));
+
+  async function loadFavs() {
+    try {
+      // no-cache so a freshly committed favorites.json shows up on the next visit
+      const res = await fetch('/favorites.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      favsData = {
+        movies: Array.isArray(json.movies) ? json.movies : [],
+        songs: Array.isArray(json.songs) ? json.songs : []
+      };
+    } catch (e) {
+      favsData = { movies: [], songs: [] };
+    }
+    favsLoaded = true;
+    renderFavs();
+  }
+
+  renderFavs();
+  loadFavs();
+
   // ---- GitHub activity (Option C: direct from GitHub's API, no Discord involved) ----
   const GITHUB_USERNAME = 'heyitsaadin';
 
