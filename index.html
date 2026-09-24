@@ -1964,10 +1964,18 @@
   <div class="bottom-fade"></div>
   <div class="video-placeholder" id="videoPlaceholder">add videos to the background-videos folder</div>
 
-  <!-- Top-left Online status pill -->
-  <div class="status-pill">
-    <span class="dot-inline" id="statusDotInline"></span>
-    <span id="statusText">connecting…</span>
+  <!-- Top-left status pill. Tap it and it morphs into a small card that explains the
+       status in plain words (see STATUS_MESSAGES in the script). One element, like the
+       top-right menu, so the pill visibly grows into the card. -->
+  <div class="status-pill" id="statusPill" role="button" tabindex="0" aria-expanded="false" aria-controls="statusDetail" aria-label="Status: connecting. Tap to see what this means.">
+    <div class="status-inner">
+      <div class="status-head">
+        <span class="dot-inline" id="statusDotInline"></span>
+        <span id="statusText">connecting…</span>
+        <svg class="status-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div class="status-detail" id="statusDetail" aria-hidden="true">Checking what I'm up to…</div>
+    </div>
   </div>
 
   <button class="mute-btn" id="muteBtn" aria-label="Mute background video">
