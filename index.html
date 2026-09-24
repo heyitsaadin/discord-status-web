@@ -2395,19 +2395,12 @@
     pill.setAttribute('aria-label', 'Status: ' + label + '. Tap to see what this means.');
 
     // The pill's closed width follows its label ("Do Not Disturb" is wider than "Idle").
-    // Measured from the real rendered layout instead of adding up magic numbers: the
-    // content starts at the dot's left edge and ends at the chevron's right edge, so the
-    // width is that span plus equal padding on both sides plus the 1px border each side.
-    const PILL_PAD = 13;   // matches .status-inner's left padding; used on the right too
-    const chev = pill.querySelector('.status-chev');
-    const dotEl = el('statusDotInline');
-    // The chevron is pushed to the far right of the fixed-width inner layer, so read the
-    // label's right edge rather than the chevron's, then add the chevron + its gap back.
-    const textRight = el('statusText').offsetLeft + el('statusText').offsetWidth;
-    const CHEV_GAP = 8;    // space between the label and the chevron
-    const chevW = chev ? chev.offsetWidth : 12;
-    const contentW = textRight + CHEV_GAP + chevW;
-    pill.style.setProperty('--pill-closed-w', Math.ceil(dotEl.offsetLeft + contentW + PILL_PAD + 2) + 'px');
+    // These are fixed, hand-tuned widths (dot + gap + label + gap + chevron + even padding)
+    // rather than measured ones: reading the label's size out of the clipped, absolutely
+    // positioned inner layer is unreliable and made the pill collapse to a thin line on
+    // phones. If a label looks tight or loose, nudge its number here.
+    const w = PILL_WIDTHS[isCoding ? 'coding' : (status in STATUS_LABELS ? status : 'offline')] || PILL_WIDTHS.offline;
+    pill.style.setProperty('--pill-closed-w', w + 'px');
 
     // Keep an open card's text in step with live changes (e.g. Online -> Coding).
     if (pillOpen) {
