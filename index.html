@@ -2423,11 +2423,6 @@
   // open card again closes it.
   (function initStatusPill() {
     const pill = el('statusPill');
-    // The pill's width is measured from the rendered label. If the page's font finishes
-    // loading after the first measurement, the text changes width, so measure again then.
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => { applyStatus(lastDiscordStatus); });
-    }
     pill.addEventListener('click', (ev) => {
       // Let the "mail" link work without also toggling the card.
       if (ev.target.closest('a')) return;
