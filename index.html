@@ -2277,6 +2277,17 @@
       </a>
     </nav>
 
+    <!-- Plain-text "don't disturb" notice + ping button. Shows whenever any custom
+         tag is currently set (see applyTag in the script). No glass card -- just
+         text, matched to the same width as the Spotify card below it. -->
+    <div class="dnd-row" id="dndRow">
+      <span class="dnd-text" id="dndText"></span>
+      <button class="ping-btn" id="pingBtn" type="button">
+        <span class="ping-spinner" aria-hidden="true"></span>
+        <span class="ping-label" id="pingLabel">Ping me</span>
+      </button>
+    </div>
+
     <!-- Activity / Spotify block, now BELOW the liquid-glass dock -->
     <div class="activity" id="activityBlock">
       <div class="activity-top">
