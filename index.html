@@ -2722,10 +2722,12 @@
       el('errorBanner').classList.remove('show');
       const d = json.data;
       applyUser(d.discord_user);
+      lastDiscordStatus = d.discord_status;
+      // Acode first, so the pill already knows whether a coding session is live.
+      applyAcode(d.kv);
       applyStatus(d.discord_status);
       applyActivity(d.activities, d.listening_to_spotify ? d.spotify : null);
       applyTag(d.kv);
-      applyAcode(d.kv);
     } catch (e) {
       showError('Connection to Lanyard failed. Retrying…');
       applyStatus('offline');
