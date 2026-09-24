@@ -2701,6 +2701,8 @@
     if (!card.classList.contains('show')) card.classList.add('show');
     tickAcode();
     if (!acodeTicker) acodeTicker = setInterval(tickAcode, 1000);
+    // Coding is live: flip the pill to "Coding" (and refresh the file/project if it's open).
+    applyStatus(lastDiscordStatus);
   }
 
   async function fetchPresence() {
