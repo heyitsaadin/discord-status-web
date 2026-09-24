@@ -2392,9 +2392,22 @@
     pill.setAttribute('aria-label', 'Status: ' + label + '. Tap to see what this means.');
 
     // The pill's closed width follows its label ("Do Not Disturb" is wider than "Idle").
-    // Measured from the real text, so it never clips or leaves dead space.
-    const textW = el('statusText').offsetWidth;
-    pill.style.setProperty('--pill-closed-w', Math.ceil(13 + 9 + 9 + textW + 9 + 12 + 16) + 'px');
+    // Measured from the real rendered layout instead of adding up magic numbers: the
+    // content starts at the dot's left edge and ends at the chevron's right edge, so the
+    // width is that span plus equal padding on both sides plus the 1px border each side.
+    const PILL_PAD = 13;   // matches .status-inner's left padding; used on the right too
+    const chev = pill.querySelector('.status-chev');
+    const dotEl = el('statusDotInline');
+    // The chevron is pushed to the far right of the fixed-width inner layer, so read the
+    // label's right edge rather than the chevron's, then add the chevron + its gap back.
+    const textRight = el('statusText').offsetLeft + el('statusText').offsetWidth;
+    const CHEV_GAP = 8;    // space between the label and the chevron
+    const chevW = chev ? chev.offsetWidth : 12;
+    const contentW = textRight + CHEV_GAP + chevW;
+    pill.style.setProperty('--pill-closed-w', Math.ceil(dotEl.offsetLeft + contentW + PILL_PAD + 2) + 'px');
+    // Pin the chevron right after the label while collapsed (it only floats to the far
+    // right of the wide inner layer when open), so it never looks detached from the text.
+    if (chev) chev.style.marginLeft = CHEV_GAP + 'px';
 
     // Keep an open card's text in step with live changes (e.g. Online -> Coding).
     if (pillOpen) {
