@@ -3253,8 +3253,11 @@
 
   // One place decides whether the tap-outside layer is up: any card being open keeps it.
   function syncScrim() {
-    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen || videosOpen);
+    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen || videosOpen || pillOpen);
   }
+
+  // Tapping outside closes the status pill too.
+  moreScrim.addEventListener('click', () => setPillOpen(false));
 
   function setInfoOpen(open) {
     if (open === infoOpen) return;
