@@ -2690,17 +2690,106 @@
   // Custom tag: set from Discord with /tag, stored in Lanyard's KV store under the
   // key "tag" and returned by Lanyard as d.kv.tag. It doesn't depend on your online
   // status, so it still shows while you're offline or invisible.
+  //
+  // Any tag currently set (whatever it says) also drives the plain-text
+  // "don't disturb" notice + ping button below the social dock -- no tag,
+  // no notice.
+  let currentTagText = '';
+
   function applyTag(kv) {
     const pill = el('tagPill');
     const raw = kv && typeof kv.tag === 'string' ? kv.tag.trim() : '';
+    currentTagText = raw.slice(0, 40);
     if (raw) {
-      pill.textContent = raw.slice(0, 40);
+      pill.textContent = currentTagText;
       pill.classList.add('show');
     } else {
       pill.textContent = '';
       pill.classList.remove('show');
     }
+    renderDndRow();
   }
+
+  function renderDndRow() {
+    const row = el('dndRow');
+    const text = el('dndText');
+    if (!currentTagText) {
+      row.classList.remove('show');
+      return;
+    }
+    text.textContent = '';
+    const strong = document.createElement('strong');
+    strong.textContent = 'Wex';
+    text.appendChild(document.createTextNode(''));
+    text.appendChild(strong);
+    text.appendChild(document.createTextNode(' is now '));
+    const tagStrong = document.createElement('strong');
+    tagStrong.textContent = currentTagText;
+    text.appendChild(tagStrong);
+    text.appendChild(document.createTextNode(', don\'t disturb him. Mail if urgent, or send a quick ping.'));
+    row.classList.add('show');
+  }
+
+  // ---- Ping button ----
+  // Posts to /api/ping, which relays a fixed message into #ping-me on Discord
+  // using the same bot that already backs /tag. One global 5-minute cooldown
+  // (enforced server-side) keeps the button from being spammed; the button
+  // mirrors that lock locally too so it can't be mashed while a request is
+  // already in flight or the server is still cooling down.
+  (function initPingButton() {
+    const btn = el('pingBtn');
+    const label = el('pingLabel');
+    let cooldownTimer = null;
+
+    function setLabel(text) { label.textContent = text; }
+
+    function lockFor(ms) {
+      btn.disabled = true;
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      const until = Date.now() + ms;
+      const tick = () => {
+        const remaining = until - Date.now();
+        if (remaining <= 0) {
+          clearInterval(cooldownTimer);
+          cooldownTimer = null;
+          btn.disabled = false;
+          setLabel('Ping me');
+          return;
+        }
+        setLabel(Math.ceil(remaining / 1000) + 's');
+      };
+      tick();
+      cooldownTimer = setInterval(tick, 1000);
+    }
+
+    btn.addEventListener('click', async () => {
+      if (btn.disabled || btn.classList.contains('loading')) return;
+      btn.classList.add('loading');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/ping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: currentTagText }),
+        });
+        const data = await res.json().catch(() => ({}));
+        btn.classList.remove('loading');
+        if (res.ok && data.ok) {
+          setLabel('Sent!');
+          lockFor(data.cooldownMs || 5 * 60 * 1000);
+        } else if (res.status === 429 && data.retryAfterMs) {
+          lockFor(data.retryAfterMs);
+        } else {
+          setLabel('Ping me');
+          btn.disabled = false;
+        }
+      } catch (e) {
+        btn.classList.remove('loading');
+        setLabel('Ping me');
+        btn.disabled = false;
+      }
+    });
+  })();
 
   // ---- Acode coding card ----
   // The Acode plugin posts heartbeats to /api/acode, which stores the session in Lanyard's
