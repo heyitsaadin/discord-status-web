@@ -2303,12 +2303,12 @@
   // Collapsed pill width (px) per status: 13 left pad + 9 dot + 9 gap + label + 8 gap +
   // 12 chevron + 13 right pad + 2 border. Labels are 12.5px / weight 600.
   const PILL_WIDTHS = {
-    online:  100,   // "Online"
-    idle:     88,   // "Idle"
-    dnd:     136,   // "Do Not Disturb"
-    offline: 100,   // "Offline"
-    coding:  102,   // "Coding"
-    connecting: 122 // "connecting…" (shown until the first Lanyard response)
+    online:  112,   // "Online"
+    idle:     96,   // "Idle"
+    dnd:     150,   // "Do Not Disturb"
+    offline: 112,   // "Offline"
+    coding:  114,   // "Coding"
+    connecting: 136 // "connecting…" (shown until the first Lanyard response)
   };
   // Apply the connecting width straight away so the pill is the right size on first paint.
   el('statusPill').style.setProperty('--pill-closed-w', PILL_WIDTHS.connecting + 'px');
