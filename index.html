@@ -3853,38 +3853,6 @@
     emptyEl.classList.add('err');
   }
 
-  function buildMovieCard(movie) {
-    const a = document.createElement('a');
-    a.className = 'fav-card movie';
-    a.href = movie.url || '#';
-    if (movie.url) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
-
-    const img = document.createElement('img');
-    img.className = 'fav-art';
-    img.loading = 'lazy';
-    img.alt = movie.title || 'Movie poster';
-    img.src = movie.poster || '';
-    a.appendChild(img);
-
-    const body = document.createElement('div');
-    body.className = 'fav-card-body';
-
-    const title = document.createElement('div');
-    title.className = 'fav-card-title';
-    title.textContent = movie.title || 'Unknown';
-    body.appendChild(title);
-
-    if (movie.year) {
-      const sub = document.createElement('div');
-      sub.className = 'fav-card-sub';
-      sub.textContent = movie.year;
-      body.appendChild(sub);
-    }
-
-    a.appendChild(body);
-    return a;
-  }
-
   function buildTrackCard(track) {
     const a = document.createElement('a');
     a.className = 'fav-card track';
