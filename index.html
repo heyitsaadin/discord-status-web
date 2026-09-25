@@ -333,6 +333,15 @@
     gap: 14px;
   }
 
+  /* The ping card lives inside .identity, whose z-index (2) sits BELOW .more-scrim's
+     (4). Normally that's correct -- the scrim should dim the avatar/name area while
+     some other card is open. But it also meant the scrim buried the ping card itself
+     whenever *it* was the thing open, since a child's z-index can never escape its
+     parent's stacking context. Bumping .identity above the scrim only while the ping
+     card is open (toggled in initPingCard) fixes that without affecting the dimming
+     behavior the rest of the time. */
+  .identity.ping-open { z-index: 4; }
+
   .avatar-wrap {
     position: relative;
     width: 132px;
