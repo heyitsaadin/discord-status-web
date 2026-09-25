@@ -1,0 +1,48 @@
+name: Vercel Deploy Status to Discord
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Poll Vercel and relay status to Discord
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -e
+          SHA="${{ github.sha }}"
+          DEPLOY_CHANNEL_ID="1552982244862464052"
+
+          sleep 15  # give Vercel a moment to register the new deployment
+
+          STATE=""
+          URL=""
+          for i in $(seq 1 30); do
+            RESP=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&limit=10")
+            MATCH=$(echo "$RESP" | jq -c --arg sha "$SHA" \
+              '[.deployments[] | select(.meta.githubCommitSha == $sha)] | .[0] // empty')
+            if [ -z "$MATCH" ]; then MATCH=$(echo "$RESP" | jq -c '.deployments[0]'); fi
+            STATE=$(echo "$MATCH" | jq -r '.state // "UNKNOWN"')
+            URL=$(echo "$MATCH" | jq -r '.url // empty')
+            echo "state: $STATE"
+            [ "$STATE" = "READY" ] || [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ] && break
+            sleep 10
+          done
+
+          case "$STATE" in
+            READY) MSG="✅ **discord-status-web** deployed\nhttps://$URL" ;;
+            ERROR) MSG="❌ **discord-status-web** deployment failed\nhttps://$URL" ;;
+            CANCELED) MSG="⚪ **discord-status-web** deployment canceled" ;;
+            *) MSG="⏳ still building after 5 min — check the Vercel dashboard" ;;
+          esac
+
+          curl -s -X POST "https://discord.com/api/v10/channels/$DEPLOY_CHANNEL_ID/messages" \
+            -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg c "$MSG" '{content: $c}')"
