@@ -2529,14 +2529,54 @@
     </nav>
 
     <!-- Plain-text "don't disturb" notice + ping button. Shows whenever any custom
-         tag is currently set (see applyTag in the script). No glass card -- just
-         text, matched to the same width as the Spotify card below it. -->
+         tag is currently set (see applyTag in the script). The text has no glass
+         card -- just centered text -- with the ping button stacked underneath it,
+         matched to the same width as the Spotify card below. -->
     <div class="dnd-row" id="dndRow">
       <span class="dnd-text" id="dndText"></span>
-      <button class="ping-btn" id="pingBtn" type="button">
-        <span class="ping-spinner" aria-hidden="true"></span>
-        <span class="ping-label" id="pingLabel">Ping me</span>
-      </button>
+
+      <!-- Ping card: a liquid-glass pill that morphs open into a small form
+           (name + message), like the status pill and the top-right menu. -->
+      <div class="ping-card" id="pingCard" role="button" tabindex="0" aria-expanded="false" aria-controls="pingContent" aria-label="Ping Wex. Tap to open.">
+        <div class="ping-trigger" id="pingTrigger">
+          <span class="ping-spinner" aria-hidden="true"></span>
+          <span class="ping-trigger-label">🔔 Ping me</span>
+        </div>
+
+        <div class="ping-content" id="pingContent" aria-hidden="true">
+          <div class="ping-form" id="pingForm">
+            <div class="ping-title">Send a ping</div>
+
+            <div class="ping-field">
+              <label for="pingName">Your name</label>
+              <input type="text" id="pingName" maxlength="60" placeholder="Optional" autocomplete="off">
+            </div>
+
+            <div class="ping-field">
+              <label for="pingMessage">Message</label>
+              <textarea id="pingMessage" maxlength="300" placeholder="What's up? (optional)"></textarea>
+            </div>
+
+            <span class="ping-error" id="pingError"></span>
+
+            <div class="ping-actions">
+              <button class="ping-cancel" id="pingCancel" type="button">Cancel</button>
+              <button class="ping-send" id="pingSend" type="button">
+                <span class="ping-spinner" aria-hidden="true"></span>
+                <span class="ping-send-label">Send</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="ping-confirm" id="pingConfirm">
+            <div class="ping-confirm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="ping-confirm-text">Message <strong>sent</strong>. Wex will see it soon.</div>
+            <div class="ping-cooldown" id="pingCooldownText"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Activity / Spotify block, now BELOW the liquid-glass dock -->
