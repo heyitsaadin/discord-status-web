@@ -2982,22 +2982,14 @@
   // key "tag" and returned by Lanyard as d.kv.tag. It doesn't depend on your online
   // status, so it still shows while you're offline or invisible.
   //
-  // Any tag currently set (whatever it says) also drives the plain-text
-  // "don't disturb" notice + ping button below the social dock -- no tag,
-  // no notice.
+  // Any tag currently set (whatever it says) drives the plain-text "don't disturb"
+  // notice + ping button below the social dock -- no tag, no notice. There's no
+  // separate pill for it anymore; this text is the only place the tag shows.
   let currentTagText = '';
 
   function applyTag(kv) {
-    const pill = el('tagPill');
     const raw = kv && typeof kv.tag === 'string' ? kv.tag.trim() : '';
     currentTagText = raw.slice(0, 40);
-    if (raw) {
-      pill.textContent = currentTagText;
-      pill.classList.add('show');
-    } else {
-      pill.textContent = '';
-      pill.classList.remove('show');
-    }
     renderDndRow();
   }
 
