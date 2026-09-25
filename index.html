@@ -3845,8 +3845,11 @@
     moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen || videosOpen || pillOpen || pingOpen);
   }
 
-  // Tapping outside closes the status pill too.
+  // Tapping outside closes the status pill and the ping card too.
   moreScrim.addEventListener('click', () => setPillOpen(false));
+  moreScrim.addEventListener('click', () => {
+    if (typeof window.__closePingCard === 'function') window.__closePingCard();
+  });
 
   function setInfoOpen(open) {
     if (open === infoOpen) return;
