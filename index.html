@@ -3066,6 +3066,7 @@
       if (next === open) return;
       open = next;
       card.classList.toggle('open', next);
+      if (identityEl) identityEl.classList.toggle('ping-open', next);
       card.setAttribute('aria-expanded', String(next));
       content.setAttribute('aria-hidden', String(!next));
       if (next) {
