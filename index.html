@@ -3033,6 +3033,9 @@
     const card = el('pingCard');
     const trigger = el('pingTrigger');
     const content = el('pingContent');
+    // Ancestor whose stacking context needs to rise above .more-scrim while this
+    // card is open -- see the .identity.ping-open rule in the CSS above.
+    const identityEl = card.closest('.identity');
     const nameInput = el('pingName');
     const msgInput = el('pingMessage');
     const errorEl = el('pingError');
