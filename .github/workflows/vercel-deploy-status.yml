@@ -63,10 +63,12 @@ jobs:
               esac
 
               echo "Posting to Discord..."
-              curl -s -X POST "https://discord.com/api/v10/channels/$DEPLOY_CHANNEL_ID/messages" \
+              HTTP_CODE=$(curl -s -o discord_resp.json -w "%{http_code}" -X POST "https://discord.com/api/v10/channels/$DEPLOY_CHANNEL_ID/messages" \
                 -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                 -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$MSG" '{content: $c}')"
+                -d "$(jq -n --arg c "$MSG" '{content: $c}')")
+              echo "Discord HTTP status: $HTTP_CODE"
+              echo "Discord response: $(cat discord_resp.json)"
 
               tmp=$(jq --arg p "$PID" --arg id "$DEP_ID" '.[$p] = $id' "$STATE_FILE")
               echo "$tmp" > "$STATE_FILE"
