@@ -3012,21 +3012,76 @@
     row.classList.add('show');
   }
 
-  // ---- Ping button ----
-  // Posts to /api/ping, which relays a fixed message into #ping-me on Discord
-  // using the same bot that already backs /tag. One global 5-minute cooldown
-  // (enforced server-side) keeps the button from being spammed; the button
-  // mirrors that lock locally too so it can't be mashed while a request is
-  // already in flight or the server is still cooling down.
-  (function initPingButton() {
-    const btn = el('pingBtn');
-    const label = el('pingLabel');
+  // ---- Ping card ----
+  // A liquid-glass pill (like the status pill / three-dots menu) that morphs open
+  // into a small form: name + message, Send/Cancel. Sending posts to /api/ping,
+  // which relays it into #ping-me on Discord using the same bot that backs /tag.
+  // A global 5-minute cooldown is enforced server-side; the card mirrors that
+  // lock locally too, and shows a countdown in the confirmation state so a repeat
+  // visitor can see when the button will work again without having to tap it.
+  (function initPingCard() {
+    const card = el('pingCard');
+    const trigger = el('pingTrigger');
+    const content = el('pingContent');
+    const nameInput = el('pingName');
+    const msgInput = el('pingMessage');
+    const errorEl = el('pingError');
+    const cancelBtn = el('pingCancel');
+    const sendBtn = el('pingSend');
+    const cooldownText = el('pingCooldownText');
+
+    let open = false;
     let cooldownTimer = null;
 
-    function setLabel(text) { label.textContent = text; }
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+    }
+    function clearError() {
+      errorEl.textContent = '';
+      errorEl.classList.remove('show');
+    }
 
-    function lockFor(ms) {
-      btn.disabled = true;
+    // Grow the card to fit the currently visible face (form or confirmation),
+    // the same way sizePill() does for the status pill.
+    function sizeCard() {
+      const h = content.scrollHeight;
+      if (h > 0) card.style.setProperty('--ping-open-h', h + 'px');
+    }
+
+    function setOpen(next) {
+      if (next === open) return;
+      open = next;
+      card.classList.toggle('open', next);
+      card.setAttribute('aria-expanded', String(next));
+      content.setAttribute('aria-hidden', String(!next));
+      if (next) {
+        requestAnimationFrame(sizeCard);
+        setTimeout(() => { if (open) nameInput.focus({ preventScroll: true }); }, 220);
+      } else {
+        clearError();
+      }
+      syncScrim();
+    }
+
+    card.addEventListener('click', (ev) => {
+      // Once open, clicks inside the form (inputs, buttons) shouldn't re-toggle it.
+      if (open) return;
+      setOpen(true);
+    });
+    card.addEventListener('keydown', (ev) => {
+      if (open) return;
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        setOpen(true);
+      }
+    });
+    cancelBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      setOpen(false);
+    });
+
+    function startCooldownCountdown(ms) {
       if (cooldownTimer) clearInterval(cooldownTimer);
       const until = Date.now() + ms;
       const tick = () => {
@@ -3034,48 +3089,81 @@
         if (remaining <= 0) {
           clearInterval(cooldownTimer);
           cooldownTimer = null;
-          btn.disabled = false;
-          setLabel('Ping me');
+          cooldownText.textContent = '';
           return;
         }
-        setLabel(Math.ceil(remaining / 1000) + 's');
+        cooldownText.textContent = 'You can send another in ' + Math.ceil(remaining / 1000) + 's';
       };
       tick();
       cooldownTimer = setInterval(tick, 1000);
     }
 
-    btn.addEventListener('click', async () => {
-      if (btn.disabled || btn.classList.contains('loading')) return;
-      btn.classList.add('loading');
-      btn.disabled = true;
+    function resetToForm() {
+      card.classList.remove('sent');
+      nameInput.value = '';
+      msgInput.value = '';
+      clearError();
+      requestAnimationFrame(sizeCard);
+    }
+
+    sendBtn.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      if (sendBtn.disabled || sendBtn.classList.contains('loading')) return;
+      clearError();
+      sendBtn.classList.add('loading');
+      sendBtn.disabled = true;
       try {
         const res = await fetch('/api/ping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tag: currentTagText }),
+          body: JSON.stringify({
+            tag: currentTagText,
+            name: nameInput.value.trim(),
+            message: msgInput.value.trim(),
+          }),
         });
         const data = await res.json().catch(() => ({}));
-        btn.classList.remove('loading');
+        sendBtn.classList.remove('loading');
+        sendBtn.disabled = false;
         if (res.ok && data.ok) {
-          setLabel('Sent!');
-          lockFor(data.cooldownMs || 5 * 60 * 1000);
+          card.classList.add('sent');
+          requestAnimationFrame(sizeCard);
+          startCooldownCountdown(data.cooldownMs || 5 * 60 * 1000);
         } else if (res.status === 429 && data.retryAfterMs) {
-          lockFor(data.retryAfterMs);
+          showError('Someone already pinged recently. Try again in a bit.');
+          startCooldownCountdown(data.retryAfterMs);
+          sizeCard();
         } else {
           // Surface the real reason instead of failing silently, so a setup
-          // problem (e.g. the bot lacking access to #ping-me) is visible
-          // instead of just quietly resetting the button.
+          // problem (e.g. the bot lacking access to #ping-me) is visible.
           console.error('Ping failed:', res.status, data && data.error);
-          setLabel('Failed');
-          setTimeout(() => { setLabel('Ping me'); btn.disabled = false; }, 2500);
+          showError('Could not send. Try again in a moment.');
+          sizeCard();
         }
       } catch (e) {
-        btn.classList.remove('loading');
+        sendBtn.classList.remove('loading');
+        sendBtn.disabled = false;
         console.error('Ping failed:', e);
-        setLabel('Failed');
-        setTimeout(() => { setLabel('Ping me'); btn.disabled = false; }, 2500);
+        showError('Could not send. Try again in a moment.');
+        sizeCard();
       }
     });
+
+    // Closing the card (scrim tap, Escape) resets it back to the form after the
+    // collapse animation, so it doesn't reopen already showing "sent" next time.
+    moreScrim.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (ev) => {
+      if (open && ev.key === 'Escape') setOpen(false);
+    });
+    card.addEventListener('transitionend', (ev) => {
+      if (ev.propertyName === 'width' && !open && card.classList.contains('sent')) {
+        resetToForm();
+      }
+    });
+
+    // Exposed for syncScrim() below, which needs to know whether this card is open
+    // alongside the menu / credits / about / videos / status-pill cards.
+    window.__pingCardOpen = () => open;
   })();
 
   // ---- Acode coding card ----
