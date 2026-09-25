@@ -29,21 +29,31 @@ jobs:
           STATE_FILE=deploy_state.json
           [ -f "$STATE_FILE" ] || echo '{}' > "$STATE_FILE"
 
+          echo "Team ID set: $( [ -n "$VERCEL_TEAM_ID" ] && echo yes || echo NO )"
+          echo "Projects string: $VERCEL_PROJECTS"
+
           IFS=',' read -ra PAIRS <<< "$VERCEL_PROJECTS"
           for pair in "${PAIRS[@]}"; do
             PID="${pair%%:*}"
             NAME="${pair#*:}"
             [ -z "$PID" ] && continue
 
+            echo "--- $NAME ($PID) ---"
             RESP=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
               "https://api.vercel.com/v6/deployments?projectId=$PID&teamId=$VERCEL_TEAM_ID&limit=1")
+            echo "Raw response: $RESP"
+
             DEP=$(echo "$RESP" | jq -c '.deployments[0] // empty')
-            [ -z "$DEP" ] && continue
+            if [ -z "$DEP" ]; then
+              echo "No deployment found, skipping."
+              continue
+            fi
 
             DEP_ID=$(echo "$DEP" | jq -r '.uid')
             STATE=$(echo "$DEP" | jq -r '.state // "UNKNOWN"')
             URL=$(echo "$DEP" | jq -r '.url // empty')
             LAST=$(jq -r --arg p "$PID" '.[$p] // empty' "$STATE_FILE")
+            echo "state=$STATE dep_id=$DEP_ID last_seen=$LAST"
 
             if [ "$DEP_ID" != "$LAST" ] && { [ "$STATE" = "READY" ] || [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; }; then
               case "$STATE" in
@@ -52,14 +62,17 @@ jobs:
                 CANCELED) MSG="⚪ **$NAME** deployment canceled" ;;
               esac
 
+              echo "Posting to Discord..."
               curl -s -X POST "https://discord.com/api/v10/channels/$DEPLOY_CHANNEL_ID/messages" \
                 -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                 -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$MSG" '{content: $c}')" > /dev/null
+                -d "$(jq -n --arg c "$MSG" '{content: $c}')"
 
               tmp=$(jq --arg p "$PID" --arg id "$DEP_ID" '.[$p] = $id' "$STATE_FILE")
               echo "$tmp" > "$STATE_FILE"
               sleep 1
+            else
+              echo "Nothing new to post."
             fi
           done
 
