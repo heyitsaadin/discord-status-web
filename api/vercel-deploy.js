@@ -20,7 +20,7 @@
 
 const crypto = require('crypto');
 
-const DEPLOY_CHANNEL_ID = 'REPLACE_WITH_YOUR_CHANNEL_ID';
+const DEPLOY_CHANNEL_ID = '1552982244862464052';
 
 function readRawBody(req) {
   return new Promise((resolve, reject) => {
