@@ -42,23 +42,32 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Read the tag text the page sent, purely to echo it back in the message.
-  // Never trust it for anything else, and cap its length so a weird payload
-  // can't blow up the Discord message.
+  // Read what the page sent. All of it is free text from an anonymous visitor,
+  // so it's only ever used as plain content below -- never trusted for anything
+  // else -- and each field is capped so a weird payload can't blow up the message.
   let tag = '';
+  let name = '';
+  let message = '';
   try {
     const raw = await readRawBody(req);
     if (raw.length > 0) {
       const body = JSON.parse(raw.toString('utf8'));
       if (body && typeof body.tag === 'string') tag = body.tag.trim().slice(0, 60);
+      if (body && typeof body.name === 'string') name = body.name.trim().slice(0, 60);
+      if (body && typeof body.message === 'string') message = body.message.trim().slice(0, 300);
     }
   } catch (e) {
     // Malformed body: just send the generic ping below.
   }
 
-  const content = tag
-    ? `🔔 Someone just pinged you from the status page while your tag says **${tag}**.`
-    : '🔔 Someone just pinged you from the status page.';
+  const who = name ? `**${name}**` : 'Someone';
+  const lines = [
+    tag
+      ? `🔔 ${who} just pinged you from the status page while your tag says **${tag}**.`
+      : `🔔 ${who} just pinged you from the status page.`,
+  ];
+  if (message) lines.push(`> ${message.replace(/\n/g, '\n> ')}`);
+  const content = lines.join('\n');
 
   try {
     const r = await fetch(`https://discord.com/api/v10/channels/${PING_CHANNEL_ID}/messages`, {
