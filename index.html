@@ -2779,13 +2779,18 @@
         } else if (res.status === 429 && data.retryAfterMs) {
           lockFor(data.retryAfterMs);
         } else {
-          setLabel('Ping me');
-          btn.disabled = false;
+          // Surface the real reason instead of failing silently, so a setup
+          // problem (e.g. the bot lacking access to #ping-me) is visible
+          // instead of just quietly resetting the button.
+          console.error('Ping failed:', res.status, data && data.error);
+          setLabel('Failed');
+          setTimeout(() => { setLabel('Ping me'); btn.disabled = false; }, 2500);
         }
       } catch (e) {
         btn.classList.remove('loading');
-        setLabel('Ping me');
-        btn.disabled = false;
+        console.error('Ping failed:', e);
+        setLabel('Failed');
+        setTimeout(() => { setLabel('Ping me'); btn.disabled = false; }, 2500);
       }
     });
   })();
