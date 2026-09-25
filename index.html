@@ -3149,9 +3149,8 @@
       }
     });
 
-    // Closing the card (scrim tap, Escape) resets it back to the form after the
-    // collapse animation, so it doesn't reopen already showing "sent" next time.
-    moreScrim.addEventListener('click', () => setOpen(false));
+    // Closing the card on Escape, and resetting it back to the form after the
+    // collapse animation finishes so it doesn't reopen already showing "sent".
     document.addEventListener('keydown', (ev) => {
       if (open && ev.key === 'Escape') setOpen(false);
     });
@@ -3161,9 +3160,11 @@
       }
     });
 
-    // Exposed for syncScrim() below, which needs to know whether this card is open
-    // alongside the menu / credits / about / videos / status-pill cards.
+    // Exposed for the shared scrim (defined further down the script, after this
+    // IIFE runs) to close this card on an outside tap and to know whether it's
+    // open alongside the menu / credits / about / videos / status-pill cards.
     window.__pingCardOpen = () => open;
+    window.__closePingCard = () => setOpen(false);
   })();
 
   // ---- Acode coding card ----
