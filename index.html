@@ -449,10 +449,9 @@
   /* inline-block (not flex) so text-overflow: ellipsis works on long tags */
   .tag-pill.show { display: inline-block; }
 
-  /* ---- "Don't disturb" plain-text notice + ping button ----
+  /* ---- "Don't disturb" plain-text notice ----
      Shown whenever a custom tag is set on the status page. No card, no glass --
-     just text, matched to the same width as the Spotify/Acode cards below it,
-     with a small pill button beside it that pings #ping-me on Discord. */
+     just centered text, matched to the same width as the Spotify/Acode cards below it. */
   .dnd-row {
     position: relative;
     z-index: 2;
@@ -461,8 +460,8 @@
     max-width: 360px;
     min-width: 300px;
     display: none;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: 10px;
     text-align: center;
   }
@@ -470,8 +469,6 @@
   .dnd-row.show { display: flex; }
 
   .dnd-text {
-    flex: 1;
-    min-width: 0;
     font-size: 12.5px;
     line-height: 1.5;
     color: var(--text-dim);
@@ -480,36 +477,117 @@
 
   .dnd-text strong { color: var(--text); font-weight: 650; }
 
-  .ping-btn {
+  /* ---- Ping button: a liquid-glass pill that MORPHS into a card ----
+     Same recipe as .status-pill / .more-menu: one element, its width/height/radius
+     animate together, anchored at its own center under the dnd text. Collapsed it's
+     a small "Ping me" pill; expanded it holds a name field, a message field and a
+     send button, then a confirmation state once sent. */
+  .ping-card {
+    --ping-ease-out: cubic-bezier(0.32, 1.28, 0.42, 1);
+    --ping-ease-in: cubic-bezier(0.4, 0, 0.2, 1);
+    --ping-open-w: min(300px, calc(100vw - 40px));
+    --ping-open-h: 216px;
+    --ping-closed-w: 104px;
+    --ping-closed-h: 34px;
     position: relative;
-    flex-shrink: 0;
+    width: var(--ping-closed-w);
+    height: var(--ping-closed-h);
+    border-radius: 17px;
+    overflow: hidden;
+    isolation: isolate;
+    cursor: pointer;
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 60%),
+      rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px) saturate(1.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 10px 24px -8px rgba(0,0,0,0.5),
+      0 2px 6px rgba(0,0,0,0.28);
+
+    transition:
+      width 0.5s var(--ping-ease-in),
+      height 0.5s var(--ping-ease-in),
+      border-radius 0.5s var(--ping-ease-in),
+      box-shadow 0.5s ease,
+      transform 0.15s ease;
+  }
+
+  .ping-card:active:not(.open) { transform: scale(0.96); }
+
+  .ping-card.open {
+    width: var(--ping-open-w);
+    height: var(--ping-open-h);
+    border-radius: 24px;
+    cursor: default;
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.6),
+      inset 0 -6px 10px -6px rgba(0,0,0,0.35),
+      0 22px 44px -12px rgba(0,0,0,0.65),
+      0 4px 12px rgba(0,0,0,0.35);
+    transition:
+      width 0.55s var(--ping-ease-out),
+      height 0.55s var(--ping-ease-out),
+      border-radius 0.55s var(--ping-ease-out),
+      box-shadow 0.55s ease,
+      transform 0.15s ease;
+  }
+
+  .ping-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.15) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .ping-card::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 200deg, rgba(255,255,255,0.05), rgba(255,255,255,0.65) 15%, rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.05) 65%, rgba(255,255,255,0.45) 85%, rgba(255,255,255,0.05));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: 0;
+  }
+
+  /* The collapsed trigger row fills the small pill, and fades out as the card opens. */
+  .ping-trigger {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 8px 14px;
-    border-radius: 999px;
     font: inherit;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 650;
     letter-spacing: -0.01em;
-    color: var(--text);
-    background:
-      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 60%),
-      rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.32);
-    box-shadow:
-      inset 0 1px 1px rgba(255,255,255,0.5),
-      0 6px 16px -8px rgba(0,0,0,0.5);
-    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    transition: opacity 0.22s ease 0.05s, transform 0.4s var(--ping-ease-in);
   }
 
-  .ping-btn:hover:not(:disabled) { background: rgba(255,255,255,0.16); }
-  .ping-btn:active:not(:disabled) { transform: scale(0.96); }
-  .ping-btn:disabled { opacity: 0.55; cursor: default; }
+  .ping-card.open .ping-trigger {
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.4s var(--ping-ease-out);
+  }
 
   .ping-spinner {
     display: none;
@@ -521,15 +599,189 @@
     animation: pingSpin 0.7s linear infinite;
   }
 
-  .ping-btn.loading .ping-spinner { display: inline-block; }
-  .ping-btn.loading .ping-label { display: none; }
+  .ping-trigger.loading .ping-spinner { display: inline-block; }
+  .ping-trigger.loading .ping-trigger-label { display: none; }
 
   @keyframes pingSpin {
     to { transform: rotate(360deg); }
   }
 
+  /* Card contents (form + confirmation). Fixed width so nothing re-wraps while the
+     container is still growing; hidden and slightly scaled while collapsed, then
+     fades in a beat after the expansion starts -- same choreography as .more-content. */
+  .ping-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--ping-open-w);
+    padding: 16px 16px 14px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    opacity: 0;
+    transform: scale(0.94);
+    transform-origin: top center;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.35s var(--ping-ease-in);
+  }
+
+  .ping-card.open .ping-content {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+    transition: opacity 0.3s ease 0.12s, transform 0.5s var(--ping-ease-out) 0.05s;
+  }
+
+  .ping-title {
+    font-size: 13.5px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    margin-bottom: 2px;
+  }
+
+  .ping-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ping-field label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  .ping-field input,
+  .ping-field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    resize: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ping-field input::placeholder,
+  .ping-field textarea::placeholder { color: var(--text-dim); }
+
+  .ping-field input:focus,
+  .ping-field textarea:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.12);
+  }
+
+  .ping-field textarea { min-height: 48px; }
+
+  .ping-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .ping-cancel,
+  .ping-send {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+  }
+
+  .ping-cancel {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.22);
+  }
+
+  .ping-cancel:hover { background: rgba(255,255,255,0.14); }
+
+  .ping-send {
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 60%),
+      rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+
+  .ping-send:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+  .ping-send:disabled { opacity: 0.55; cursor: default; }
+  .ping-cancel:active,
+  .ping-send:active:not(:disabled) { transform: scale(0.96); }
+
+  .ping-send .ping-spinner { display: none; }
+  .ping-send.loading .ping-spinner { display: inline-block; }
+  .ping-send.loading .ping-send-label { display: none; }
+
+  /* Confirmation state: replaces the form once a ping is sent. */
+  .ping-confirm {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 4px;
+    text-align: center;
+  }
+
+  .ping-card.sent .ping-confirm { display: flex; }
+  .ping-card.sent .ping-form { display: none; }
+
+  .ping-confirm-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59,165,93,0.18);
+    border: 1px solid rgba(59,165,93,0.45);
+    color: var(--online);
+  }
+
+  .ping-confirm-icon svg { width: 17px; height: 17px; }
+
+  .ping-confirm-text {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .ping-confirm-text strong { color: var(--text); font-weight: 650; }
+
+  .ping-cooldown {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ping-error {
+    font-size: 11.5px;
+    color: #ff9698;
+    display: none;
+  }
+
+  .ping-error.show { display: block; }
+
   @media (prefers-reduced-motion: reduce) {
     .ping-spinner { animation: none; }
+    .ping-card, .ping-card.open,
+    .ping-trigger, .ping-card.open .ping-trigger,
+    .ping-content, .ping-card.open .ping-content { transition: none; }
   }
 
   /* ---- Mute toggle ---- */
