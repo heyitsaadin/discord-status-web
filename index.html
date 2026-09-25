@@ -609,8 +609,16 @@
     animation: pingSpin 0.7s linear infinite;
   }
 
+  .ping-trigger-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+  }
+
   .ping-trigger.loading .ping-spinner { display: inline-block; }
-  .ping-trigger.loading .ping-trigger-label { display: none; }
+  .ping-trigger.loading .ping-trigger-label,
+  .ping-trigger.loading .ping-trigger-icon { display: none; }
 
   @keyframes pingSpin {
     to { transform: rotate(360deg); }
