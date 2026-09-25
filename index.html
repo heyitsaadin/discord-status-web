@@ -3840,7 +3840,8 @@
 
   // One place decides whether the tap-outside layer is up: any card being open keeps it.
   function syncScrim() {
-    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen || videosOpen || pillOpen);
+    const pingOpen = typeof window.__pingCardOpen === 'function' && window.__pingCardOpen();
+    moreScrim.classList.toggle('show', menuOpen || creditsOpen || infoOpen || videosOpen || pillOpen || pingOpen);
   }
 
   // Tapping outside closes the status pill too.
