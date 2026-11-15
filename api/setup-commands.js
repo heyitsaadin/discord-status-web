@@ -44,6 +44,14 @@ const COMMAND = {
       required: false,
       max_length: 40,
     },
+    {
+      type: 3,
+      name: 'place',
+      description: 'Where you are or are heading: search a place, pick a saved one, or type any name',
+      required: false,
+      autocomplete: true, // suggestions are served by api/discord.js
+      max_length: 40,
+    },
   ],
 };
 
